@@ -1,7 +1,7 @@
 //import { getAnalytics } from 'firebase/analytics';
 import { initializeApp } from 'firebase/app';
 import { connectFirestoreEmulator, getFirestore } from 'firebase/firestore';
-import { getAuth, signInWithEmailAndPassword } from 'firebase/auth'
+import { browserSessionPersistence, getAuth, setPersistence } from 'firebase/auth'
 import { connectFunctionsEmulator, getFunctions } from 'firebase/functions';
 //import { GoogleGenAI } from "@google/genai";
 
@@ -20,16 +20,7 @@ const app = initializeApp(firebaseConfig);
 //export const analytics = getAnalytics(app);
 export const firestore = getFirestore(app);
 export const auth = getAuth(app);
-
-signInWithEmailAndPassword(auth, 'chali.test@test.com', 'chali.test')
-  .then((userCredential) => {
-    // Signed in
-    const user = userCredential.user;
-    console.log('User signed in:', user);
-  })
-  .catch((error) => {
-    console.error('Error signing in:', error);
-  });
+setPersistence(auth, browserSessionPersistence)
 
 // console.log('process.env: ' + import.meta.env.VITE_GEMINI_API_KEY);
 // const ai = new GoogleGenAI({
