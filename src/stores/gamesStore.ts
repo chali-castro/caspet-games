@@ -1,51 +1,101 @@
 import { defineStore } from 'pinia';
 import { CRoom } from '../model/room';
-import { ref } from 'vue';
-import { addDoc, collection, getDocs, getDoc, doc } from 'firebase/firestore';
-import { firestore } from '../firebase';
+import { computed, ref, watch } from 'vue';
+import { addDoc, collection, doc } from 'firebase/firestore';
+import { auth, firestore } from '../firebase';
 import { getFunctions, httpsCallable } from 'firebase/functions';
+import { onAuthStateChanged, type User } from 'firebase/auth';
+import { useCollection, useDocument } from 'vuefire';
 
 export default defineStore('games', () =>
 {
     const functions = getFunctions();
     const callEmpezarJuego = httpsCallable(functions, 'empezarJuego', { limitedUseAppCheckTokens: true });
-    const callLeerReglamento = httpsCallable(functions, 'leerReglamento', { limitedUseAppCheckTokens: true });
+    const callEnviarMensaje = httpsCallable(functions, 'enviarMensaje', { limitedUseAppCheckTokens: true });
+    const usuario = ref<User | null>(null);
 
     const rooms = ref<CRoom[]>([]);
     const showNewRoomDialog = ref(false);
-    const currentGame = ref<CRoom | null>(null);
-    const getRooms = async () =>
+    const showMensajesDialog = ref<{ show: boolean, tipo: string; }>({ show: false, tipo: '' });
+
+    const colRooms = useCollection(collection(firestore, 'rooms'));
+    const gmRommId = ref<string | null>(null);
+    const gmRoom = ref<CRoom | null>(null);
+    const gmRoomSource = computed(() => gmRommId.value ? doc(collection(firestore, 'rooms'), gmRommId.value): null);
+    const { data: gmRoomData } = useDocument(() => gmRoomSource.value);
+    const playerRommId = ref<string | null>(null);
+    const playerRoom = ref<CRoom | null>(null);
+    const playerRoomSource = computed(() => playerRommId.value ? doc(collection(firestore, 'rooms'), playerRommId.value) : null);
+    const { data: playerRoomData } = useDocument(() => playerRoomSource.value);
+
+    watch(() => gmRoomData.value, () =>
     {
-        const querySnapshot = await getDocs(collection(firestore, 'rooms'));
-        rooms.value = await Promise.all(querySnapshot.docs.map(async (doc) => await CRoom.fromFirestore(doc.id, doc.data())));
-    };
+        if (gmRommId.value && gmRoomData.value) {
+            gmRoom.value = CRoom.fromFirestore(gmRommId.value, gmRoomData.value, usuario.value?.displayName ?? '');
+        }
+    });
+
+    watch(() => playerRoomData.value, () =>
+    {
+        if (playerRommId.value && playerRoomData.value) {
+            playerRoom.value = CRoom.fromFirestore(playerRommId.value, playerRoomData.value, usuario.value?.displayName ?? '');
+        }
+    });
+
+    watch(() => colRooms.value,
+        () =>
+        {
+            console.log('Rooms updated:', colRooms.value);
+            rooms.value = colRooms.value.map((doc) => CRoom.fromFirestore(doc.id, doc, usuario.value!.displayName ?? ''));
+        });
+
+    onAuthStateChanged(auth, (user) =>
+    {
+        if (user) {
+            usuario.value = user;
+        } else {
+            usuario.value = null;
+        }
+    });
+
 
     return {
         rooms,
         showNewRoomDialog,
-        getRooms,
-        currentGame,
+        showMensajesDialog,
+        gmRoom,
+        playerRoom,
+        usuario,
         createRoom: async (room: CRoom) =>
         {
             // Logic to create a new room
             await addDoc(collection(firestore, 'rooms'), {
                 name: room.name
             });
-
-            await getRooms();
         },
         empezarJuego: async (room: CRoom) =>
         {
             await callEmpezarJuego(room.id);
-            const roomRef = doc(firestore, 'rooms', room.id);
-            const roomSnap = await getDoc(roomRef);
-            if (roomSnap.exists()) {
-                currentGame.value = await CRoom.fromFirestore(roomSnap.id, roomSnap.data());
-            }
+            gmRommId.value = room.id;
         },
-        leerReglamento: async () =>
+        accederGM: (room: CRoom) =>
         {
-            currentGame.value!.reglamento = (await callLeerReglamento(currentGame.value!.id)).data as string;
-        }
+            gmRommId.value = room.id;
+        },
+        puedeAcceder: (room: CRoom) =>
+        {
+            if (room.participantes.some((item) => item.id === usuario.value?.uid)) {
+                return true;
+            }
+            return false;
+        },
+        accederJugador: (room: CRoom) =>
+        {
+            playerRommId.value = room.id;
+        },
+        sendMessage: async (tipo: string, message: string) =>
+        {
+            await callEnviarMensaje({ roomId: playerRommId.value, userName: usuario.value?.displayName, tipo, mensaje: message });
+        },
     };
 });

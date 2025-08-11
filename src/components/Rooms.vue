@@ -3,7 +3,7 @@ import { auth } from '../firebase';
 import useGames from '../composables/useGames';
 import NewRoom from './NewRoom.vue';
 
-const { empezarJuego, rooms, showNewRoomDialog } = useGames();
+const { accederGM, accederJugador, empezarJuego, puedeAcceder, rooms, showNewRoomDialog } = useGames();
 
 const logout = async () =>
 {
@@ -55,6 +55,16 @@ const logout = async () =>
                     color="primary"
                     @click="empezarJuego(item)">
                     Empezar
+                  </v-btn>
+                  <v-btn v-if="item.status === 'progress'"
+                    color="primary"
+                    @click="accederGM(item)">
+                    GM
+                  </v-btn>
+                  <v-btn v-if="item.status === 'progress' && puedeAcceder(item)"
+                    color="primary"
+                    @click="accederJugador(item)">
+                    Jugador
                   </v-btn>
                 </v-card-actions>
               </v-card>

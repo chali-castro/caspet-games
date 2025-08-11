@@ -1,6 +1,6 @@
 import { initializeApp } from 'firebase/app';
 import { connectFirestoreEmulator, getFirestore } from 'firebase/firestore';
-import { browserSessionPersistence, getAuth, setPersistence } from 'firebase/auth'
+import { connectAuthEmulator, browserSessionPersistence, getAuth, setPersistence } from 'firebase/auth'
 import { connectFunctionsEmulator, getFunctions } from 'firebase/functions';
 import { CustomProvider, initializeAppCheck, ReCaptchaV3Provider } from 'firebase/app-check';
 import { getAnalytics } from 'firebase/analytics';
@@ -16,7 +16,7 @@ const firebaseConfig = {
 };
 
 
-const firebaseApp = initializeApp(firebaseConfig);
+export const firebaseApp = initializeApp(firebaseConfig);
 export const analytics = getAnalytics(firebaseApp);
 export const firestore = getFirestore(firebaseApp);
 export const auth = getAuth(firebaseApp);
@@ -38,6 +38,7 @@ if (import.meta.env.MODE === 'development') {
     isTokenAutoRefreshEnabled: true,
   });
 
+  connectAuthEmulator(auth, 'http://127.0.0.1:9099');
   connectFirestoreEmulator(firestore, '127.0.0.1', 8080);
   connectFunctionsEmulator(getFunctions(), '127.0.0.1', 5001);
 } else {

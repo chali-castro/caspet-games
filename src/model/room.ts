@@ -1,4 +1,28 @@
-import { DocumentReference, getDoc, type DocumentData } from "firebase/firestore";
+import { type DocumentData } from "firebase/firestore";
+
+class CMensaje
+{
+    sender: string = '';
+    mensaje: string = '';
+
+    public constructor (sender: string, mensaje: string)
+    {
+        this.sender = sender;
+        this.mensaje = mensaje;
+    }
+}
+
+class CUsuario
+{
+    id: string = '';
+    name: string = '';
+
+    public constructor (id: string, name: string)
+    {
+        this.id = id;
+        this.name = name;
+    }
+}
 
 export class CRoom implements DocumentData
 {
@@ -7,14 +31,15 @@ export class CRoom implements DocumentData
     tipo: string = '';
     status: string = '';
     gameName: string = '';
-    participantes: string[] = [];
-    reglamento?: string;
+    participantes: CUsuario[] = [];
+    publicos: CMensaje[] = [];
+    privados: CMensaje[] = [];
 
     public constructor ()
     {
     }
 
-    public static async fromFirestore(id: string, data: DocumentData): Promise<CRoom>
+    public static fromFirestore(id: string, data: DocumentData, userName: string): CRoom
     {
         const room = new CRoom();
         if (id) {
@@ -26,17 +51,9 @@ export class CRoom implements DocumentData
             room.tipo = data['tipo'] || '';
             room.status = data['status'] || 'create';
             room.gameName = data['gameName'] || '';
-
-            if (data['participantes']) {
-                room.participantes = await Promise.all(data['participantes'].map(async (part: DocumentReference) =>
-                {
-                    const doc = await getDoc(part);
-                    if (doc.exists()) {
-                        return doc.data().name;
-                    }
-                    return null;
-                }));
-            }
+            room.publicos = data['publicos'] ? data['publicos'].map((item: { sender:string, mensaje: string }) => new CMensaje(item.sender, item.mensaje)) : [];
+            room.privados = data['privados'] ? data['privados'].filter((item: { participante: string }) => item.participante === userName).map((item: { sender:string, mensaje: string }) => new CMensaje(item.sender, item.mensaje)) : [];
+            room.participantes = data['participantes'] || [];        
         }
 
         return room;
@@ -44,7 +61,7 @@ export class CRoom implements DocumentData
 
     get listaParticipantes(): string
     {
-        return this.participantes.join(', ');
+        return this.participantes.map((item) => item.name).join(', ');
     }
 
 }
