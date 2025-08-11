@@ -5,11 +5,12 @@ import { computed } from 'vue';
 export default () =>
 { 
     const store = gamesStore();
-    const { rooms, showNewRoomDialog } = storeToRefs(store);
-    const { createRoom, empezarJuego, getRooms } = store;
+    const { currentGame, rooms, showNewRoomDialog } = storeToRefs(store);
+    const { createRoom, empezarJuego, getRooms, leerReglamento } = store;
 
     return {
         showNewRoomDialog,
+        currentGame,
         rooms: computed(() =>
         {
             if (rooms.value.length === 0)
@@ -19,6 +20,7 @@ export default () =>
             return rooms.value;
         }),
         createRoom,
-        empezarJuego
+        empezarJuego,
+        leerReglamento
     };
 };

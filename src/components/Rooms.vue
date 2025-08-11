@@ -37,17 +37,22 @@ const logout = async () =>
             <v-item v-slot>
               <v-card width="300">
                 <v-card-title>{{ item.name }}</v-card-title>
-                <v-text-field
-                  v-model="item.tipo"
+                <v-text-field v-model="item.tipo"
                   label="Tipo de juego"
                   disabled />
-                <v-text-field
-                  v-model="item.listaParticipantes"
+                <v-text-field v-model="item.listaParticipantes"
                   label="Participantes"
+                  disabled />
+                <v-text-field v-model="item.gameName"
+                  label="Nombre del juego"
+                  disabled />
+                <v-text-field v-model="item.status"
+                  label="Estado"
                   disabled />
 
                 <v-card-actions>
-                  <v-btn color="primary"
+                  <v-btn v-if="item.status === 'create'"
+                    color="primary"
                     @click="empezarJuego(item)">
                     Empezar
                   </v-btn>

@@ -5,9 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vue-tsc -b && vite build",
+    "build": "vue-tsc && vite build",
     "preview": "vite preview",
-    "deploy": "vue-tsc-b && vite build && firebase deploy",
+    "deploy": "vue-tsc && vite build && firebase deploy",
     "emulator": "firebase emulators:start --import=data --export-on-exit"
   },
   "dependencies": {

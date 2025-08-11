@@ -1,9 +1,9 @@
-//import { getAnalytics } from 'firebase/analytics';
 import { initializeApp } from 'firebase/app';
 import { connectFirestoreEmulator, getFirestore } from 'firebase/firestore';
 import { browserSessionPersistence, getAuth, setPersistence } from 'firebase/auth'
 import { connectFunctionsEmulator, getFunctions } from 'firebase/functions';
-//import { GoogleGenAI } from "@google/genai";
+import { CustomProvider, initializeAppCheck, ReCaptchaV3Provider } from 'firebase/app-check';
+import { getAnalytics } from 'firebase/analytics';
 
 const firebaseConfig = {
   apiKey: "AIzaSyBAEY1A0LdMApdG5elnFWIl3lIBVhuJVYw",
@@ -16,28 +16,34 @@ const firebaseConfig = {
 };
 
 
-const app = initializeApp(firebaseConfig);
-//export const analytics = getAnalytics(app);
-export const firestore = getFirestore(app);
-export const auth = getAuth(app);
-setPersistence(auth, browserSessionPersistence)
-
-// console.log('process.env: ' + import.meta.env.VITE_GEMINI_API_KEY);
-// const ai = new GoogleGenAI({
-//     apiKey: import.meta.env.VITE_GEMINI_API_KEY,
-//   });
-
-// async function testAI() {
-//     const response = await ai.models.generateContent({
-//       model: "gemini-2.5-flash",
-//       contents: "Quiero un juego social de misterio con habitaciones para 5 participantes: Juan, Pedro, Elias, Pilar y Eva donde tú seras el GM e interactuaras con los jugadores",
-//     });
-//     console.log('IA Response: ' + response.text);
-//   }
-  
-//   testAI();
+const firebaseApp = initializeApp(firebaseConfig);
+export const analytics = getAnalytics(firebaseApp);
+export const firestore = getFirestore(firebaseApp);
+export const auth = getAuth(firebaseApp);
+setPersistence(auth, browserSessionPersistence);
 
 if (import.meta.env.MODE === 'development') {
+  console.log('development, process.env: ' + JSON.stringify(import.meta.env));
+  initializeAppCheck(firebaseApp, {
+    provider: new CustomProvider({
+      getToken: () =>
+      {
+        return Promise.resolve({
+          token: "fake-token",
+          expireTimeMillis: Date.now() + 1000 * 60 * 60 * 24, // 1 day
+        });
+      }
+    }),
+
+    isTokenAutoRefreshEnabled: true,
+  });
+
   connectFirestoreEmulator(firestore, '127.0.0.1', 8080);
   connectFunctionsEmulator(getFunctions(), '127.0.0.1', 5001);
+} else {
+  console.log('production, process.env: ' + JSON.stringify(import.meta.env));
+  initializeAppCheck(firebaseApp, {
+    provider: new ReCaptchaV3Provider(import.meta.env.VITE_RECAPTCHA_V3_KEY),
+    isTokenAutoRefreshEnabled: true,
+  });
 }

@@ -1,10 +1,14 @@
 import { DocumentReference, getDoc, type DocumentData } from "firebase/firestore";
 
-export class CRoom implements DocumentData{
+export class CRoom implements DocumentData
+{
     id: string = '';
     name: string = '';
     tipo: string = '';
+    status: string = '';
+    gameName: string = '';
     participantes: string[] = [];
+    reglamento?: string;
 
     public constructor ()
     {
@@ -20,13 +24,17 @@ export class CRoom implements DocumentData{
         if (data) {
             room.name = data['name'];
             room.tipo = data['tipo'] || '';
+            room.status = data['status'] || 'create';
+            room.gameName = data['gameName'] || '';
+
             if (data['participantes']) {
-                await Promise.all(data['participantes'].map(async (part: DocumentReference) =>
+                room.participantes = await Promise.all(data['participantes'].map(async (part: DocumentReference) =>
                 {
                     const doc = await getDoc(part);
                     if (doc.exists()) {
-                        room.participantes.push(doc.data().name);
+                        return doc.data().name;
                     }
+                    return null;
                 }));
             }
         }
@@ -34,7 +42,9 @@ export class CRoom implements DocumentData{
         return room;
     }
 
-    get listaParticipantes(): string {
+    get listaParticipantes(): string
+    {
         return this.participantes.join(', ');
     }
+
 }
