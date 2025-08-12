@@ -38,25 +38,39 @@ const gameSchema = {
   required: ["nombre"],
 };
 
+const preparaPrompt = async (roomId: string) => {
+  const roomSnapshot = await getFirestore().doc(`rooms/${roomId}`).get();
+  if (!roomSnapshot.exists) {
+    throw new Error(`Room with ID ${roomId} does not exist.`);
+  }
+  const roomData = roomSnapshot.data();
+  const tipo = roomData?.tipo;
+  const players = await Promise.all(roomData?.participantes.map(
+    async (item: DocumentReference) => {
+      const participante = (await item.get()).data();
+      return participante !== undefined ? participante.name : "";
+    }));
+
+  const prompt = `\
+Quiero un juego ${tipo} \
+para ${roomData?.participantes.length} jugadores, \
+los participantes son: ${players.join(", ")} \
+donde tú seras el GM e interactuaras con los jugadores \
+mediante mensajes públicos y privados y eventos, \
+en los mensajes públicos puedes enviar los detalles como: \
+el reglamento, mensajes de bienvenida, objetivos y \
+la ocurrencias de los eventos \
+`;
+
+  return prompt;
+};
+
 const empezarJuego = runWith({
   enforceAppCheck: true,
   secrets: ["GOOGLE_GENAI_API_KEY"],
 })
   .https
   .onCall(async (roomId: string) => {
-    const firestore = getFirestore();
-    const roomSnapshot = await firestore.doc(`rooms/${roomId}`).get();
-    if (!roomSnapshot.exists) {
-      throw new Error(`Room with ID ${roomId} does not exist.`);
-    }
-    const roomData = roomSnapshot.data();
-    const tipo = roomData?.tipo;
-    const players = await Promise.all(roomData?.participantes.map(
-      async (item: DocumentReference) => {
-        const participante = (await item.get()).data();
-        return participante !== undefined ? participante.name : "";
-      }));
-
     const chat = genAI.chats.create({
       model: "gemini-2.5-flash",
     });
@@ -65,20 +79,8 @@ const empezarJuego = runWith({
       throw new Error("Failed to create chat instance.");
     }
 
-    const msg1 = `Quiero un juego ${tipo}`;
-    const msg2 = `para ${roomData?.participantes.length}`;
-    const msg3 = `participantes: ${players.join(", ")}`;
-    const msg4 = "donde tú seras el GM e interactuaras con los jugadores ";
-    const msg5 = "con mensajes públicos y privados";
-    const msg6 = "en los mensajes públicos puedes enviar los detalles como";
-    const msg7 = "el reglamento, mensajes de bienvenida, objetivos y eventos";
-    const msg8 = "por separado";
-    // const msg5 = "no me des información";
-    // const msg6 = "luego te los iré pidiendo los detalles";
-
     const respGameAI = await chat.sendMessage({
-      message: `${msg1}, ${msg2} ${msg3}, ${msg4}` +
-        ` ${ msg5 }, ${ msg6 } ${ msg7 } ${ msg8 }`,
+      message: await preparaPrompt(roomId),
       config: {
         responseMimeType: "application/json",
         responseSchema: gameSchema,
@@ -100,7 +102,7 @@ const empezarJuego = runWith({
         return {...item, sender: "GM"};
       });
 
-      await firestore.doc(`rooms/${roomId}`).update({
+      await getFirestore().doc(`rooms/${roomId}`).update({
         gameName: gameAI.nombre,
         publicos,
         privados,
@@ -140,9 +142,13 @@ const enviarMensaje = runWith({
     });
 
     if (chat) {
+      const prompt = `
+Importante: debes responder solamente con los nuevos mensajes y eventos.
+${userName} te envía un mensaje ${tipo}: '${mensaje}'.
+`;
+
       const respMensaje = await chat.sendMessage({
-        message: `${userName} te envía un mensaje ${tipo}: ${mensaje}, ` +
-          "solo debes responder con los mensajes y eventos nuevos",
+        message: prompt,
         config: {
           responseMimeType: "application/json",
           responseSchema: gameSchema,

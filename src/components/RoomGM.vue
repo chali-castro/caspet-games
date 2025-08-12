@@ -1,32 +1,38 @@
 <script setup lang="ts">
+import { nextTick, ref, watch } from 'vue';
 import useGames from '../composables/useGames';
 
 const { gmRoom } = useGames();
+const roomMain = ref<HTMLDivElement | null>(null);
 
+watch(() => gmRoom.value, async () => {
+    await nextTick();
+    if (roomMain.value) {
+        const div = roomMain.value;
+        div.scrollTo({ top: div.scrollHeight });
+    }
+}, { immediate: true });
 </script>
 <template>
-    <v-container>
+    <v-app-bar color="primary">
+        <v-app-bar-title>Game Master View - Juego: {{ gmRoom!.gameName }} - Mensajes privados</v-app-bar-title>
+        <v-label>Participantes: {{ gmRoom!.listaParticipantes }}</v-label>
+    </v-app-bar>
+    <div class="overflow-y-auto"
+        style="height: 100vh;"
+        ref="roomMain">
         <v-row>
             <v-col>
-                <h2>Game Master View</h2>
-                <p>Room ID: {{ gmRoom!.id }}</p>
-                <p>Nombre del juego: {{ gmRoom!.gameName }}</p>
-                <p>Participantes: {{ gmRoom!.listaParticipantes }}</p>
-            </v-col>
-        </v-row>
-        <v-row>
-            <v-col>
-                <h3>Mensajes Públicos</h3>
                 <v-list>
                     <v-list-item v-for="msg in gmRoom!.publicos"
                         :key="msg.mensaje">
                         <div class="d-flex flex-row">
-                            <div class="ma-3 pa-3 player">{{ msg.sender }}:</div>
-                            <div class="ma-3 pa-3">{{ msg.mensaje }}</div>
+                            <div class="pa-1 player">{{ msg.sender }}:</div>
+                            <div class="pa-1">{{ msg.mensaje }}</div>
                         </div>
                     </v-list-item>
                 </v-list>
             </v-col>
         </v-row>
-    </v-container>
+    </div>
 </template>
