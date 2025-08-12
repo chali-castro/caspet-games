@@ -21,7 +21,7 @@ watch(() => gmRoom.value, async () =>
     </v-app-bar>
     <v-main style="height: 100vh;">
         <div class="overflow-y-auto"
-            style="height: 100%; background-color: antiquewhite;"
+            style="height: 100%;"
             ref="roomMain">
             <v-row>
                 <v-col>
