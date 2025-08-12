@@ -31,22 +31,21 @@ export default defineStore('games', () =>
     watch(() => gmRoomData.value, () =>
     {
         if (gmRommId.value && gmRoomData.value) {
-            gmRoom.value = CRoom.fromFirestore(gmRommId.value, gmRoomData.value, usuario.value?.displayName ?? '');
+            gmRoom.value = CRoom.fromFirestore(gmRommId.value, gmRoomData.value, usuario.value?.uid ?? '');
         }
     });
 
     watch(() => playerRoomData.value, () =>
     {
         if (playerRommId.value && playerRoomData.value) {
-            playerRoom.value = CRoom.fromFirestore(playerRommId.value, playerRoomData.value, usuario.value?.displayName ?? '');
+            playerRoom.value = CRoom.fromFirestore(playerRommId.value, playerRoomData.value, usuario.value?.uid ?? '');
         }
     });
 
     watch(() => colRooms.value,
         () =>
         {
-            console.log('Rooms updated:', colRooms.value);
-            rooms.value = colRooms.value.map((doc) => CRoom.fromFirestore(doc.id, doc, usuario.value!.displayName ?? ''));
+            rooms.value = colRooms.value.map((doc) => CRoom.fromFirestore(doc.id, doc, usuario.value!.uid ?? ''));
         });
 
     onAuthStateChanged(auth, (user) =>
@@ -95,7 +94,12 @@ export default defineStore('games', () =>
         },
         sendMessage: async (tipo: string, message: string) =>
         {
-            await callEnviarMensaje({ roomId: playerRommId.value, userName: usuario.value?.displayName, tipo, mensaje: message });
+            const roomId = playerRommId.value;
+            const userName = playerRoom.value?.participantes.find((p) => p.id === usuario.value?.uid)?.name ?? undefined;
+
+            if (roomId && userName) {
+                await callEnviarMensaje({ roomId, userName, tipo, mensaje: message });
+            }
         },
     };
 });

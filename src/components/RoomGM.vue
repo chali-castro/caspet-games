@@ -18,9 +18,12 @@ const { gmRoom } = useGames();
             <v-col>
                 <h3>Mensajes Públicos</h3>
                 <v-list>
-                    <v-list-item v-for="msg in gmRoom!.publicos" :key="msg.mensaje">
-                        <div style="color: darkturquoise;">{{ msg.sender }}:</div>
-                        <div>{{ msg.mensaje }}</div>
+                    <v-list-item v-for="msg in gmRoom!.publicos"
+                        :key="msg.mensaje">
+                        <div class="d-flex flex-row">
+                            <div class="ma-3 pa-3 player">{{ msg.sender }}:</div>
+                            <div class="ma-3 pa-3">{{ msg.mensaje }}</div>
+                        </div>
                     </v-list-item>
                 </v-list>
             </v-col>

@@ -21,8 +21,10 @@ const { playerRoom, showMensajesDialog } = useGames();
                 <h3>Mensajes Privados</h3>
                 <v-list>
                     <v-list-item v-for="msg in playerRoom!.privados" :key="msg.mensaje">
-                        <div style="color: darkturquoise;">{{ msg.sender }}:</div>
-                        <div>{{ msg.mensaje }}</div>
+                        <div class="d-flex flex-row">
+                            <div class="ma-3 pa-3 player">{{ msg.sender }}:</div>
+                            <div class="ma-3 pa-3">{{ msg.mensaje }}</div>
+                        </div>
                     </v-list-item>
                 </v-list>
             </v-col>

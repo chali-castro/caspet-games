@@ -1,35 +1,41 @@
 import {DocumentReference, getFirestore} from "firebase-admin/firestore";
 import {runWith} from "firebase-functions/v1";
 import {genAI} from "..";
-import { Type } from '@google/genai';
+import {Type} from "@google/genai";
 
 const gameSchema = {
   type: Type.OBJECT,
   properties: {
-    nombre: { type: Type.STRING },
+    nombre: {type: Type.STRING},
     privados: {
       type: Type.ARRAY,
       items: {
         type: Type.OBJECT,
         properties: {
-          participante: { type: Type.STRING },
-          mensaje: { type: Type.STRING },
+          participante: {type: Type.STRING},
+          mensaje: {type: Type.STRING},
         },
-        required: ["participante", "mensaje"]
-      }
+        required: ["participante", "mensaje"],
+      },
     },
     publicos: {
       type: Type.ARRAY,
       items: {
         type: Type.OBJECT,
         properties: {
-          mensaje: { type: Type.STRING },
+          mensaje: {type: Type.STRING},
         },
-        required: ["mensaje"]
-      }
-    }
+        required: ["mensaje"],
+      },
+    },
+    eventos: {
+      type: Type.ARRAY,
+      items: {
+        type: Type.STRING,
+      },
+    },
   },
-  required: ["nombre"]
+  required: ["nombre"],
 };
 
 const empezarJuego = runWith({
@@ -37,8 +43,7 @@ const empezarJuego = runWith({
   secrets: ["GOOGLE_GENAI_API_KEY"],
 })
   .https
-  .onCall(async (roomId: string) =>
-  {
+  .onCall(async (roomId: string) => {
     const firestore = getFirestore();
     const roomSnapshot = await firestore.doc(`rooms/${roomId}`).get();
     if (!roomSnapshot.exists) {
@@ -47,8 +52,7 @@ const empezarJuego = runWith({
     const roomData = roomSnapshot.data();
     const tipo = roomData?.tipo;
     const players = await Promise.all(roomData?.participantes.map(
-      async (item: DocumentReference) =>
-      {
+      async (item: DocumentReference) => {
         const participante = (await item.get()).data();
         return participante !== undefined ? participante.name : "";
       }));
@@ -66,39 +70,44 @@ const empezarJuego = runWith({
     const msg3 = `participantes: ${players.join(", ")}`;
     const msg4 = "donde tú seras el GM e interactuaras con los jugadores ";
     const msg5 = "con mensajes públicos y privados";
-    const msg6 = "en los mensajes públicos puedes enviar los detalles como el reglamento, mensajes de bienvenida y objetivos por separado";
-    //const msg5 = "no me des información";
+    const msg6 = "en los mensajes públicos puedes enviar los detalles como";
+    const msg7 = "el reglamento, mensajes de bienvenida, objetivos y eventos";
+    const msg8 = "por separado";
+    // const msg5 = "no me des información";
     // const msg6 = "luego te los iré pidiendo los detalles";
 
     const respGameAI = await chat.sendMessage({
-      message: `${msg1}, ${msg2} ${msg3}, ${msg4} ${msg5}, ${msg6}`,
+      message: `${msg1}, ${msg2} ${msg3}, ${msg4}` +
+        ` ${ msg5 }, ${ msg6 } ${ msg7 } ${ msg8 }`,
       config: {
         responseMimeType: "application/json",
         responseSchema: gameSchema,
-      }
+      },
     });
 
 
     if (respGameAI) {
-      const gameAI = JSON.parse(respGameAI.text!);
-      console.log(gameAI);
-      const publicos = gameAI.publicos.map((item: any) =>
-      {
-        return { ...item, sender: 'GM'};  
+      const gameAI = respGameAI.text ? JSON.parse(respGameAI.text) : {};
+
+      const publicos = gameAI.publicos.map((item: { mensaje: string }) => {
+        return {...item, sender: "GM"};
       });
-      const privados = gameAI.privados.map((item: any) =>
-      {
-        return { ...item, sender: 'GM'};  
+      const privados = gameAI.privados.map((item:
+        {
+          mensaje: string,
+          participante: string;
+        }) => {
+        return {...item, sender: "GM"};
       });
 
       await firestore.doc(`rooms/${roomId}`).update({
-      gameName: gameAI.nombre,
-      publicos,
-      privados,
-      historyChat: JSON.stringify(chat.getHistory()),
-      status: "progress",
-    });
-
+        gameName: gameAI.nombre,
+        publicos,
+        privados,
+        eventos: gameAI.eventos,
+        historyChat: JSON.stringify(chat.getHistory()),
+        status: "progress",
+      });
     } else {
       console.error("No game AI response received.");
     }
@@ -109,8 +118,7 @@ const enviarMensaje = runWith({
   secrets: ["GOOGLE_GENAI_API_KEY"],
 })
   .https
-  .onCall(async ({ roomId, userName, tipo, mensaje }) =>
-  {
+  .onCall(async ({roomId, userName, tipo, mensaje}) => {
     const firestore = getFirestore();
     const roomSnapshot = await firestore.doc(`rooms/${roomId}`).get();
     if (!roomSnapshot.exists) {
@@ -133,44 +141,52 @@ const enviarMensaje = runWith({
 
     if (chat) {
       const respMensaje = await chat.sendMessage({
-        message: `${userName} te envía un mensaje ${tipo}: ${mensaje}, solo debes responder con los mensajes nuevos`,
+        message: `${userName} te envía un mensaje ${tipo}: ${mensaje}, ` +
+          "solo debes responder con los mensajes y eventos nuevos",
         config: {
           responseMimeType: "application/json",
           responseSchema: gameSchema,
-        }
+        },
       });
 
       if (respMensaje) {
-        const mensajes = JSON.parse(respMensaje.text!);
-        console.log("Mensajes recibidos:", mensajes);
+        const mensajes = respMensaje.text ? JSON.parse(respMensaje.text) : {};
         const chatHistory = chat.getHistory();
-        const privados = roomData['privados'] || [];
-        const publicos = roomData['publicos'] || [];
+        const privados = roomData["privados"] || [];
+        const publicos = roomData["publicos"] || [];
+        const eventos = roomData["eventos"] || [];
 
-        if (tipo === 'privado') {
-          privados.push({ sender: userName, mensaje });
+        if (tipo === "privado") {
+          privados.push({sender: userName, mensaje, participante: userName});
         }
-        mensajes.privados.forEach((item: any) => {
-          privados.push({...item, sender: 'GM'});
+        mensajes.privados.forEach((item: {mensaje: string}) => {
+          privados.push({...item, sender: "GM"});
         });
 
-        if (tipo === 'publico') {
-          publicos.push({ sender: userName, mensaje });
+        if (tipo === "publico") {
+          publicos.push({sender: userName, mensaje});
         }
-        mensajes.publicos.forEach((item: any) => {
-          publicos.push({...item, sender: 'GM'});
+        mensajes.publicos.forEach((item: {
+          mensaje: string,
+          participante: string;
+        }) => {
+          publicos.push({...item, sender: "GM"});
         });
+
+        // eventos.forEach((item: string) => {
+        //   eventos.push(item);
+        // });
 
         await firestore.doc(`rooms/${roomId}`).update({
           privados,
           publicos,
+          eventos,
           historyChat: JSON.stringify(chatHistory),
         });
-      }
-      else {
+      } else {
         console.error("No game AI response received.");
       }
-    }    
+    }
   });
 
 export {empezarJuego, enviarMensaje};
