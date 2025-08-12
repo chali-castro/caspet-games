@@ -18,7 +18,7 @@ export default defineStore('games', () =>
     const showNewRoomDialog = ref(false);
     const showMensajesDialog = ref<{ show: boolean, tipo: string; }>({ show: false, tipo: '' });
 
-    const colRooms = useCollection(collection(firestore, 'rooms'));
+    const colRooms = useCollection(() => usuario.value ? collection(firestore, 'rooms') : null);
     const gmRommId = ref<string | null>(null);
     const gmRoom = ref<CRoom | null>(null);
     const gmRoomSource = computed(() => gmRommId.value ? doc(collection(firestore, 'rooms'), gmRommId.value): null);

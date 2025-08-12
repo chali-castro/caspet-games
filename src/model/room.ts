@@ -37,7 +37,6 @@ export class CRoom implements DocumentData
 
         if (data) {
             room._userId = userId;
-            console.log('Data from Firestore:', data);
             room.name = data.name;
             room.tipo = data.tipo;
             room.status = data.status || 'create';
@@ -46,7 +45,6 @@ export class CRoom implements DocumentData
             room._privados = data.privados ? data.privados.map((item: any) => ({ ...item })) : [];
             room.publicos = data.publicos ? data.publicos.map((item: { sender: string, mensaje: string; }) => ({ sender: item.sender, mensaje: item.mensaje })) : [];
             room.participantes = data['participantes'] || [];
-            console.log('Participantes from Firestore:', room.participantes);
         }
 
         return room;

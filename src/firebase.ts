@@ -23,7 +23,6 @@ export const auth = getAuth(firebaseApp);
 setPersistence(auth, browserSessionPersistence);
 
 if (import.meta.env.MODE === 'development') {
-  console.log('development, process.env: ' + JSON.stringify(import.meta.env));
   initializeAppCheck(firebaseApp, {
     provider: new CustomProvider({
       getToken: () =>
@@ -42,7 +41,6 @@ if (import.meta.env.MODE === 'development') {
   connectFirestoreEmulator(firestore, '127.0.0.1', 8080);
   connectFunctionsEmulator(getFunctions(), '127.0.0.1', 5001);
 } else {
-  console.log('production, process.env: ' + JSON.stringify(import.meta.env));
   initializeAppCheck(firebaseApp, {
     provider: new ReCaptchaV3Provider(import.meta.env.VITE_RECAPTCHA_V3_KEY),
     isTokenAutoRefreshEnabled: true,
