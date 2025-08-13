@@ -1,9 +1,7 @@
 import { initializeApp } from 'firebase/app';
-import { connectFirestoreEmulator, getFirestore } from 'firebase/firestore';
-import { connectAuthEmulator, browserSessionPersistence, getAuth, setPersistence } from 'firebase/auth'
-import { connectFunctionsEmulator, getFunctions } from 'firebase/functions';
 import { CustomProvider, initializeAppCheck, ReCaptchaV3Provider } from 'firebase/app-check';
-import { getAnalytics } from 'firebase/analytics';
+import { connectAuthEmulator, getAuth } from 'firebase/auth';
+import { connectFunctionsEmulator, getFunctions } from 'firebase/functions';
 
 const firebaseConfig = {
   apiKey: "AIzaSyBAEY1A0LdMApdG5elnFWIl3lIBVhuJVYw",
@@ -15,12 +13,7 @@ const firebaseConfig = {
   measurementId: "G-YL2ZM3CEPN"
 };
 
-
 export const firebaseApp = initializeApp(firebaseConfig);
-export const analytics = getAnalytics(firebaseApp);
-export const firestore = getFirestore(firebaseApp);
-export const auth = getAuth(firebaseApp);
-setPersistence(auth, browserSessionPersistence);
 
 if (import.meta.env.MODE === 'development') {
   initializeAppCheck(firebaseApp, {
@@ -37,8 +30,7 @@ if (import.meta.env.MODE === 'development') {
     isTokenAutoRefreshEnabled: true,
   });
 
-  connectAuthEmulator(auth, 'http://127.0.0.1:9099');
-  connectFirestoreEmulator(firestore, '127.0.0.1', 8080);
+  connectAuthEmulator(getAuth(firebaseApp), 'http://127.0.0.1:9099');
   connectFunctionsEmulator(getFunctions(), '127.0.0.1', 5001);
 } else {
   initializeAppCheck(firebaseApp, {

@@ -3,8 +3,12 @@ import { nextTick, ref, watch } from 'vue';
 import useGames from '../composables/useGames';
 import Mensaje from './Mensaje.vue';
 
-const { playerRoom, showMensajesDialog } = useGames();
+const { playerRoom, playerRoomId, showMensajesDialog } = useGames();
 const roomMain = ref<HTMLDivElement | null>(null);
+
+const { id: roomId } = defineProps<{
+    id: string;
+}>();
 
 watch(() => playerRoom.value, async () =>
 {
@@ -13,14 +17,19 @@ watch(() => playerRoom.value, async () =>
         const div = roomMain.value;
         div.scrollTo({ top: div.scrollHeight });
     }
+});
+
+watch(() => roomId, () =>
+{
+    playerRoomId.value = roomId;
 }, { immediate: true });
 
 </script>
 <template>
     <mensaje />
     <v-app-bar color="primary">
-        <v-app-bar-title>Player View - Juego: {{ playerRoom!.gameName }} - Tus mensajes privados</v-app-bar-title>
-        <v-label>Participantes: {{ playerRoom!.listaParticipantes }}</v-label>
+        <v-app-bar-title>Player View - Juego: {{ playerRoom?.gameName }} - Tus mensajes privados</v-app-bar-title>
+        <v-label>Participantes: {{ playerRoom?.listaParticipantes }}</v-label>
     </v-app-bar>
     <v-main style="height: 100vh;">
         <div class="overflow-y-auto"
@@ -29,7 +38,7 @@ watch(() => playerRoom.value, async () =>
             <v-row>
                 <v-col>
                     <v-list>
-                        <v-list-item v-for="msg in playerRoom!.privados"
+                        <v-list-item v-for="msg in playerRoom?.privados"
                             :key="msg.mensaje">
                             <div class="d-flex flex-row">
                                 <div class="pa-1 player">{{ msg.sender }}:</div>

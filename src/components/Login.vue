@@ -1,14 +1,17 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { signInWithEmailAndPassword } from 'firebase/auth';
-import { auth } from '../firebase';
+import { useFirebaseAuth } from 'vuefire';
 
+const auth = useFirebaseAuth();
 const email = ref('');
 const password = ref('');
 
 const login = async () =>
 {
-    await signInWithEmailAndPassword(auth, email.value, password.value);
+    if (auth) {
+        await signInWithEmailAndPassword(auth, email.value, password.value);
+    }
 };
 </script>
 <template>

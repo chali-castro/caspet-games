@@ -3,10 +3,10 @@ import { ref } from 'vue';
 import useGames from '../composables/useGames';
 import { CRoom } from '../model/room';
 
-const { showNewRoomDialog } = useGames();
+const { showNewRoomDialog, createRoom  } = useGames();
 const roomName = ref('');
 
-const createRoom = async () =>
+const createRoomGame = async () =>
 {
     if (roomName.value.trim() === '') {
         alert('Room name cannot be empty');
@@ -15,7 +15,7 @@ const createRoom = async () =>
     const room = new CRoom();
     room.name = roomName.value;
 
-    await useGames().createRoom(room);
+    await createRoom(room);
     showNewRoomDialog.value = false;
 };
 </script>
@@ -30,7 +30,7 @@ const createRoom = async () =>
                     label="Room Name" />
             </v-card-text>
             <v-card-actions>
-                <v-btn @click="createRoom">Create</v-btn>
+                <v-btn @click="createRoomGame">Create</v-btn>
                 <v-btn @click="showNewRoomDialog = false">Cancel</v-btn>
             </v-card-actions>
         </v-card>

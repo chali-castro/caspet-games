@@ -8,7 +8,7 @@ import {empezarJuego, enviarMensaje} from "./games/games";
 
 admin.initializeApp();
 
-if (process.env.mode === 'development') {
+if (process.env.FIREBASE_DEBUG_MODE === "true") {
   const appHost = express();
   appHost.use(cors({origin: "*"}));
 }

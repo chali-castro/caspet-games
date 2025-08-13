@@ -1,13 +1,15 @@
 <script setup lang="ts">
-import { auth } from '../firebase';
 import useGames from '../composables/useGames';
 import NewRoom from './NewRoom.vue';
+import Login from './Login.vue';
+import router from '../router';
+import { useFirebaseAuth } from 'vuefire';
 
-const { accederGM, accederJugador, empezarJuego, puedeAcceder, rooms, showNewRoomDialog } = useGames();
-
+const { empezarJuego, loggedIn, puedeAcceder, rooms, showNewRoomDialog } = useGames();
+const auth = useFirebaseAuth();
 const logout = async () =>
 {
-  await auth.signOut();
+  await auth?.signOut();
 };
 
 </script>
@@ -16,19 +18,25 @@ const logout = async () =>
   <new-room />
   <v-app-bar color="primary">
     <v-app-bar-title>Rooms</v-app-bar-title>
-    <v-btn icon
-      v-tooltip="'Crear Sala'"
-      @click="showNewRoomDialog = true">
-      <v-icon>mdi-fireplace-off</v-icon>
-    </v-btn>
-    <v-spacer />
-    <v-btn icon
-      v-tooltip="'Cerrar Sesión'"
-      @click="logout">
-      <v-icon>mdi-logout</v-icon>
-    </v-btn>
+    <template v-if="loggedIn">
+      <v-btn icon
+        v-tooltip="'Crear Sala'"
+        @click="showNewRoomDialog = true">
+        <v-icon>mdi-fireplace-off</v-icon>
+      </v-btn>
+      <v-spacer />
+      <v-btn icon
+        v-tooltip="'Cerrar Sesión'"
+        @click="logout">
+        <v-icon>mdi-logout</v-icon>
+      </v-btn>
+    </template>
+    <template v-else>
+    </template>
   </v-app-bar>
-  <v-main class="d-flex align-center justify-center">
+  <login v-if="!loggedIn" />
+  <v-main v-else
+    class="d-flex">
     <v-container>
       <v-item-group>
         <v-row>
@@ -58,12 +66,12 @@ const logout = async () =>
                   </v-btn>
                   <v-btn v-if="item.status === 'progress'"
                     color="primary"
-                    @click="accederGM(item)">
+                    @click="router.push({ name: 'RoomGM', params: { id: item.id } })">
                     GM
                   </v-btn>
                   <v-btn v-if="item.status === 'progress' && puedeAcceder(item)"
                     color="primary"
-                    @click="accederJugador(item)">
+                    @click="router.push({ name: 'RoomPlayer', params: { id: item.id } })">
                     Jugador
                   </v-btn>
                 </v-card-actions>
