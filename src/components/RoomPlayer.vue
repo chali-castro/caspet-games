@@ -1,14 +1,25 @@
 <script setup lang="ts">
-import { nextTick, ref, watch } from 'vue';
+import { computed, nextTick, ref, watch } from 'vue';
 import useGames from '../composables/useGames';
 import Mensaje from './Mensaje.vue';
 
-const { playerRoom, playerRoomId, showMensajesDialog } = useGames();
+const { playerRoom, playerRoomId, showMensajesDialog, usuario } = useGames();
 const roomMain = ref<HTMLDivElement | null>(null);
 
 const { id: roomId } = defineProps<{
     id: string;
 }>();
+
+const noIniciado = computed(() =>
+{
+    return playerRoom.value?.status !== 'progress';
+});
+
+const privados = computed(() =>
+{
+    const participante = playerRoom.value?.participantes?.find((item) => item.id === usuario.value?.uid);
+    return playerRoom.value?.privados?.filter((msg) => msg.participante === participante?.name) ?? [];
+});
 
 watch(() => playerRoom.value, async () =>
 {
@@ -29,16 +40,23 @@ watch(() => roomId, () =>
     <mensaje />
     <v-app-bar color="primary">
         <v-app-bar-title>Player View - Juego: {{ playerRoom?.gameName }} - Tus mensajes privados</v-app-bar-title>
-        <v-label>Participantes: {{ playerRoom?.listaParticipantes }}</v-label>
+        <v-label>Participantes:
+            {{playerRoom?.participantes?.map((p: { name: string; }) => p.name).join(', ')}}</v-label>
     </v-app-bar>
     <v-main style="height: 100vh;">
-        <div class="overflow-y-auto"
+        <div v-if="noIniciado"
+            class="d-flex flex-column align-center justify-center"
+            style="height: 100%;">
+            <h1>Esperando a que el GM inicie el juego</h1>
+        </div>
+        <div else
+            class="overflow-y-auto"
             style="height: 100%;"
             ref="roomMain">
             <v-row>
                 <v-col>
                     <v-list>
-                        <v-list-item v-for="msg in playerRoom?.privados"
+                        <v-list-item v-for="msg in privados"
                             :key="msg.mensaje">
                             <div class="d-flex flex-row">
                                 <div class="pa-1 player">{{ msg.sender }}:</div>

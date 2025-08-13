@@ -4,13 +4,16 @@ import NewRoom from './NewRoom.vue';
 import Login from './Login.vue';
 import router from '../router';
 import { useFirebaseAuth } from 'vuefire';
+import type { CRoom } from '../model/room';
 
-const { empezarJuego, loggedIn, puedeAcceder, rooms, showNewRoomDialog } = useGames();
+const { empezarJuego, loggedIn, puedeAccederGM, puedeAccederPlayer, puedeEmpezar, rooms, showNewRoomDialog } = useGames();
 const auth = useFirebaseAuth();
 const logout = async () =>
 {
   await auth?.signOut();
 };
+
+const participantes = (room: CRoom) => room.participantes?.map((p) => p.name).join(', ');
 
 </script>
 
@@ -48,7 +51,7 @@ const logout = async () =>
                 <v-text-field v-model="item.tipo"
                   label="Tipo de juego"
                   disabled />
-                <v-text-field v-model="item.listaParticipantes"
+                <v-text-field :modelValue="participantes(item)"
                   label="Participantes"
                   disabled />
                 <v-text-field v-model="item.gameName"
@@ -59,17 +62,17 @@ const logout = async () =>
                   disabled />
 
                 <v-card-actions>
-                  <v-btn v-if="item.status === 'create'"
+                  <v-btn v-if="puedeEmpezar(item)"
                     color="primary"
                     @click="empezarJuego(item)">
                     Empezar
                   </v-btn>
-                  <v-btn v-if="item.status === 'progress'"
+                  <v-btn v-if="puedeAccederGM(item)"
                     color="primary"
                     @click="router.push({ name: 'RoomGM', params: { id: item.id } })">
                     GM
                   </v-btn>
-                  <v-btn v-if="item.status === 'progress' && puedeAcceder(item)"
+                  <v-btn v-if="puedeAccederPlayer(item)"
                     color="primary"
                     @click="router.push({ name: 'RoomPlayer', params: { id: item.id } })">
                     Jugador

@@ -5,7 +5,7 @@ export default () =>
 { 
     const store = gamesStore();
     const { gmRoom, loggedIn, gmRommId, playerRoom, playerRoomId, rooms, showNewRoomDialog, showMensajesDialog, usuario } = storeToRefs(store);
-    const { createRoom, empezarJuego, puedeAcceder, sendMessage } = store;
+    const { createRoom, empezarJuego, puedeAccederGM, puedeAccederPlayer, puedeEmpezar, sendMessage } = store;
 
     return {
         loggedIn,
@@ -19,7 +19,9 @@ export default () =>
         playerRoom,
         playerRoomId,
         empezarJuego,
-        puedeAcceder,
+        puedeAccederGM,
+        puedeAccederPlayer,
+        puedeEmpezar,
         sendMessage
     };
 };
