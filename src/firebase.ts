@@ -14,6 +14,7 @@ const firebaseConfig = {
 };
 
 export const firebaseApp = initializeApp(firebaseConfig);
+export const adsenseClient = import.meta.env.VITE_ADSENSE_CLIENT;
 
 if (import.meta.env.MODE === 'development') {
   initializeAppCheck(firebaseApp, {

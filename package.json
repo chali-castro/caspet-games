@@ -13,6 +13,7 @@
   "dependencies": {
     "@google/genai": "^1.13.0",
     "@mdi/font": "^7.4.47",
+    "dotenv": "^17.2.1",
     "firebase": "~11.6.0",
     "pinia": "^3.0.3",
     "vite-plugin-adsense": "^1.2.0",
