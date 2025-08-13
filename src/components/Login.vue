@@ -50,9 +50,9 @@ onMounted(async () =>
                         class="adsbygoogle"
                         style="display:block"
                         data-ad-client="ca-pub-2014966493239600"
-                        data-ad-slot="1234567890"
+                        data-ad-slot="8709646296"
                         data-full-width-responsive="true"
-                        data-ad-format="rectangle"></ins>
+                        data-ad-format="auto"></ins>
                 </v-col>
             </v-row>
         </v-container>

@@ -1,9 +1,10 @@
 import { defineStore } from 'pinia';
 import { type CRoom } from '../model/room';
 import { computed, ref, watch } from 'vue';
-import { addDoc, collection, doc, query, where } from 'firebase/firestore';
+import { addDoc, arrayUnion, collection, doc, query, updateDoc, where } from 'firebase/firestore';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { useCollection, useCurrentUser, useDocument, useFirestore } from 'vuefire';
+import router from '../router';
 
 export default defineStore('games', () =>
 {
@@ -61,10 +62,18 @@ export default defineStore('games', () =>
             await callEmpezarJuego(room.id);
             gmRommId.value = room.id;
         },
+        unirse: async (room: CRoom) =>
+        {
+            await updateDoc(doc(collection(firestore, 'rooms'), room.id), {
+                participantes: arrayUnion(doc(collection(firestore, 'users'), usuario.value?.uid))
+            });
+            router.push({ name: 'RoomPlayer', params: { id: room.id } });
+        },
         puedeEmpezar: (room: CRoom) => room.status === 'created' && room.creadoPor?.id === usuario.value?.uid,
         puedeAccederGM: (room: CRoom) => room.status === 'progress' && room.creadoPor?.id === usuario.value?.uid,
         puedeAccederPlayer: (room: CRoom) => room.status === 'progress' && room.participantes?.some((item) => item.id === usuario.value?.uid)
             || (room.status === 'created') && room.creadoPor?.id !== usuario.value?.uid && room.participantes?.some((item) => item.id === usuario.value?.uid),
+        puedeUnirse: (room: CRoom) => room.status === 'created' && room.public && !room.participantes?.some((item) => item.id === usuario.value?.uid),
         sendMessage: async (tipo: string, message: string) =>
         {
             const roomId = playerRoomId.value;

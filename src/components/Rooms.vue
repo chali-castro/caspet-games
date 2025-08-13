@@ -6,7 +6,7 @@ import router from '../router';
 import { useFirebaseAuth } from 'vuefire';
 import type { CRoom } from '../model/room';
 
-const { empezarJuego, loggedIn, puedeAccederGM, puedeAccederPlayer, puedeEmpezar, rooms, showNewRoomDialog } = useGames();
+const { empezarJuego, loggedIn, puedeAccederGM, puedeAccederPlayer, puedeEmpezar, puedeUnirse, rooms, showNewRoomDialog, unirse } = useGames();
 const auth = useFirebaseAuth();
 const logout = async () =>
 {
@@ -76,6 +76,11 @@ const participantes = (room: CRoom) => room.participantes?.map((p) => p.name).jo
                     color="primary"
                     @click="router.push({ name: 'RoomPlayer', params: { id: item.id } })">
                     Jugador
+                  </v-btn>
+                  <v-btn v-if="puedeUnirse(item)"
+                    color="primary"
+                    @click="unirse(item)">
+                    Unirse
                   </v-btn>
                 </v-card-actions>
               </v-card>
