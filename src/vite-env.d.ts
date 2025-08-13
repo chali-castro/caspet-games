@@ -6,7 +6,8 @@ interface ViteTypeOptions {
 }
 
 interface ImportMetaEnv {
-  readonly VITE_RECAPTCHA_V3_KEY: string
+  readonly VITE_RECAPTCHA_V3_KEY: string,
+  readonly VITE_ADSENSE_CLIENT: string
 }
 
 interface ImportMeta {
