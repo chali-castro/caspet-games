@@ -60,7 +60,7 @@ watch(() => roomId, () =>
                             :key="msg.mensaje">
                             <div class="d-flex flex-row">
                                 <div class="pa-1 player">{{ msg.sender }}:</div>
-                                <div class="pa-1">{{ msg.mensaje }}</div>
+                                <div class="pa-1" v-html="msg.mensaje" />
                             </div>
                         </v-list-item>
                     </v-list>

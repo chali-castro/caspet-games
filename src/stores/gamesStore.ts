@@ -13,6 +13,7 @@ export default defineStore('games', () =>
     const callEmpezarJuego = httpsCallable(functions, 'empezarJuego', { limitedUseAppCheckTokens: true });
     const callEnviarMensaje = httpsCallable(functions, 'enviarMensaje', { limitedUseAppCheckTokens: true });
     const usuario = useCurrentUser();
+    const currentLoaders = ref<boolean[]>([]);
 
     const showNewRoomDialog = ref(false);
     const showMensajesDialog = ref<{ show: boolean, tipo: string; }>({ show: false, tipo: '' });
@@ -25,17 +26,38 @@ export default defineStore('games', () =>
     const { data: rooms, pending: colRoomsPending } = useCollection<CRoom>(() => roomsQry.value, { wait: true });
     const gmRommId = ref<string | null>(null);
     const gmRoomSource = computed(() => gmRommId.value ? doc(collection(firestore, 'rooms'), gmRommId.value) : null);
-    const { data: gmRoom } = useDocument<CRoom>(() => gmRoomSource.value, { wait: true });
+    const { data: gmRoom, pending: gmRoomPending } = useDocument<CRoom>(() => gmRoomSource.value, { wait: true });
     const playerRoomId = ref<string | null>(null);
     const playerRoomSource = computed(() => playerRoomId.value ? doc(collection(firestore, 'rooms'), playerRoomId.value) : null);
-    const { data: playerRoom } = useDocument<CRoom>(() => playerRoomSource.value, { wait: true });
+    const { data: playerRoom, pending: playerRoomPending } = useDocument<CRoom>(() => playerRoomSource.value, { wait: true });
+
+    const setLoader = (loader: boolean = true): void =>
+    {
+        if (loader) {
+            currentLoaders.value.push(loader);
+        }
+        else {
+            currentLoaders.value.pop();
+        }
+    };
 
     watch(() => colRoomsPending.value, () =>
     {
-        console.log('Rooms collection pending:', colRoomsPending.value);
+        setLoader(colRoomsPending.value);
+    });
+
+    watch(() => gmRoomPending.value, () =>
+    {
+        setLoader(gmRoomPending.value);
+    });
+
+    watch(() => playerRoomPending.value, () =>
+    {
+        setLoader(playerRoomPending.value);
     });
 
     return {
+        isLoading: computed(() => currentLoaders.value.length > 0),
         rooms,
         showNewRoomDialog,
         showMensajesDialog,
@@ -47,27 +69,45 @@ export default defineStore('games', () =>
         loggedIn: computed(() => !!usuario.value),
         createRoom: async (room: CRoom) =>
         {
-            // Logic to create a new room
-            await addDoc(collection(firestore, 'rooms'), {
-                name: room.name,
-                tipo: room.tipo,
-                status: 'created',
-                creadoPor: doc(collection(firestore, 'users'), usuario.value?.uid),
-                participantes: [doc(collection(firestore, 'users'), usuario.value?.uid)],
-                public: true
-            });
+            setLoader();
+            try {
+                // Logic to create a new room
+                await addDoc(collection(firestore, 'rooms'), {
+                    name: room.name,
+                    tipo: room.tipo,
+                    status: 'created',
+                    creadoPor: doc(collection(firestore, 'users'), usuario.value?.uid),
+                    participantes: [doc(collection(firestore, 'users'), usuario.value?.uid)],
+                    public: true
+                });
+            }
+            finally {
+                setLoader(false);
+            }
         },
         empezarJuego: async (room: CRoom) =>
         {
-            await callEmpezarJuego(room.id);
-            gmRommId.value = room.id;
+            setLoader();
+            try {
+                await callEmpezarJuego(room.id);
+                gmRommId.value = room.id;
+            }
+            finally {
+                setLoader(false);
+            }
         },
         unirse: async (room: CRoom) =>
         {
-            await updateDoc(doc(collection(firestore, 'rooms'), room.id), {
-                participantes: arrayUnion(doc(collection(firestore, 'users'), usuario.value?.uid))
-            });
-            router.push({ name: 'RoomPlayer', params: { id: room.id } });
+            setLoader();
+            try {
+                await updateDoc(doc(collection(firestore, 'rooms'), room.id), {
+                    participantes: arrayUnion(doc(collection(firestore, 'users'), usuario.value?.uid))
+                });
+                router.push({ name: 'RoomPlayer', params: { id: room.id } });
+            }
+            finally {
+                setLoader(false);
+            }
         },
         puedeEmpezar: (room: CRoom) => room.status === 'created' && room.creadoPor?.id === usuario.value?.uid,
         puedeAccederGM: (room: CRoom) => room.status === 'progress' && room.creadoPor?.id === usuario.value?.uid,
@@ -76,11 +116,17 @@ export default defineStore('games', () =>
         puedeUnirse: (room: CRoom) => room.status === 'created' && room.public && !room.participantes?.some((item) => item.id === usuario.value?.uid),
         sendMessage: async (tipo: string, message: string) =>
         {
-            const roomId = playerRoomId.value;
-            const userName = playerRoom.value?.participantes?.find((p) => p.id === usuario.value?.uid)?.name ?? undefined;
+            setLoader();
+            try {
+                const roomId = playerRoomId.value;
+                const userName = playerRoom.value?.participantes?.find((p) => p.id === usuario.value?.uid)?.name ?? undefined;
 
-            if (roomId && userName) {
-                await callEnviarMensaje({ roomId, userName, tipo, mensaje: message });
+                if (roomId && userName) {
+                    await callEnviarMensaje({ roomId, userName, tipo, mensaje: message });
+                }
+            }
+            finally {
+                setLoader(false);
             }
         },
     };

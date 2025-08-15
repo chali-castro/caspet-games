@@ -1,4 +1,5 @@
-import {DocumentReference, getFirestore} from "firebase-admin/firestore";
+import {DocumentReference, DocumentSnapshot, getFirestore}
+  from "firebase-admin/firestore";
 import {runWith} from "firebase-functions/v1";
 import {genAI} from "..";
 import {Type} from "@google/genai";
@@ -28,22 +29,44 @@ const gameSchema = {
         required: ["mensaje"],
       },
     },
+    acciones: {
+      type: Type.ARRAY,
+      items: {
+        type: Type.OBJECT,
+        properties: {
+          nombre: {type: Type.STRING},
+          descripcion: {type: Type.STRING},
+          opciones: {
+            type: Type.ARRAY,
+            items: {
+              type: Type.STRING,
+            },
+          },
+        },
+        required: ["nombre", "descripcion"],
+      },
+    },
     eventos: {
       type: Type.ARRAY,
       items: {
-        type: Type.STRING,
+        type: Type.OBJECT,
+        properties: {
+          descripcion: {type: Type.STRING},
+          explicacion: {type: Type.STRING},
+        },
+        required: ["descripcion"],
       },
     },
+    porcentajeAvance: {type: Type.NUMBER},
   },
-  required: ["nombre"],
+  required: ["nombre", "porcentajeAvance"],
 };
 
-const preparaPrompt = async (roomId: string) => {
-  const roomSnapshot = await getFirestore().doc(`rooms/${roomId}`).get();
-  if (!roomSnapshot.exists) {
-    throw new Error(`Room with ID ${roomId} does not exist.`);
+const preparaPrompt = async (roomSnap: DocumentSnapshot) => {
+  if (!roomSnap.exists) {
+    throw new Error(`Room with ID ${roomSnap.id} does not exist.`);
   }
-  const roomData = roomSnapshot.data();
+  const roomData = roomSnap.data();
   const tipo = roomData?.tipo;
   const players = await Promise.all(roomData?.participantes.map(
     async (item: DocumentReference) => {
@@ -51,15 +74,30 @@ const preparaPrompt = async (roomId: string) => {
       return participante !== undefined ? participante.name : "";
     }));
 
-  const prompt = `\
-Quiero un juego ${tipo} \
+  const prompt = `
+Creame un juego ${tipo} \
 para ${roomData?.participantes.length} jugadores, \
 los participantes son: ${players.join(", ")} \
 donde tú seras el GM e interactuaras con los jugadores \
 mediante mensajes públicos y privados y eventos, \
-en los mensajes públicos puedes enviar los detalles como: \
-el reglamento, mensajes de bienvenida, objetivos y \
-la ocurrencias de los eventos \
+en los mensajes públicos debes enviar los detalles como: \
+el reglamento, mensajes de bienvenida, información general, objetivos, \
+la ocurrencias de los eventos y \
+la explicación de todas las acciones posibles de realizar por los jugadores; \
+en los mensajes privados debes enviar los detalles como: \
+los mensajes privados deben incluir información detallada \
+sensible o específica para cada jugador, como su rol, \
+habilidades, objetivos personales y las acciones que pueden realizar. \
+El juego debe constar de 10 rondas, \
+los usuario pueden realizar una acción por ronda. \
+Las rondas terminan cuando todos los jugadores hayan realizado su acción. \
+Al terminar la ronda debes informar del estado de los jugadores \
+y de los eventos ocurridos. \
+También es posible que al terminar la ronda \
+se actualicen las acciones que se puedan realizar. \
+Los mensajes deben estar en formato HTML para ser inscrustado en un tag DIV. \
+Las acciones deben ser claras y específicas, \
+indicando qué se puede hacer en cada momento del juego.
 `;
 
   return prompt;
@@ -71,48 +109,79 @@ const empezarJuego = runWith({
 })
   .https
   .onCall(async (roomId: string) => {
-    const chat = genAI.chats.create({
-      model: "gemini-2.5-flash",
-    });
+    const firestore = getFirestore();
+    const roomRef = firestore.doc(`rooms/${roomId}`);
+    // const chat = genAI.chats.create({
+    //   model: "gemini-2.5-flash",
+    // });
 
-    if (!chat) {
-      throw new Error("Failed to create chat instance.");
-    }
+    await firestore.runTransaction(async (transaction) => {
+      const roomSnap = await transaction.get(roomRef);
+      const prompt = await preparaPrompt(roomSnap);
 
-    const respGameAI = await chat.sendMessage({
-      message: await preparaPrompt(roomId),
-      config: {
-        responseMimeType: "application/json",
-        responseSchema: gameSchema,
-      },
-    });
-
-
-    if (respGameAI) {
-      const gameAI = respGameAI.text ? JSON.parse(respGameAI.text) : {};
-
-      const publicos = gameAI.publicos.map((item: { mensaje: string }) => {
-        return {...item, sender: "GM"};
+      const respGameAI = await genAI.models.generateContent({
+        model: "gemini-2.5-flash",
+        contents: prompt,
+        config: {
+          responseMimeType: "application/json",
+          responseSchema: gameSchema,
+        },
       });
-      const privados = gameAI.privados.map((item:
+
+
+      if (respGameAI) {
+        console.log("Game AI response received:", respGameAI);
+
+        const contentAI = [{
+          role: "user",
+          parts: [{text: prompt}],
+        },
         {
-          mensaje: string,
-          participante: string;
-        }) => {
-        return {...item, sender: "GM"};
-      });
+          role: "model",
+          parts: [{text: respGameAI.text}],
+        },
+        ];
+        const aiCache = await genAI.caches.create({
+          model: "gemini-2.5-flash",
+          config: {
+            displayName: `Game: ${roomId}[1]`,
+            contents: contentAI,
+            ttl: "3600s",
+          },
+        });
 
-      await getFirestore().doc(`rooms/${roomId}`).update({
-        gameName: gameAI.nombre,
-        publicos,
-        privados,
-        eventos: gameAI.eventos,
-        historyChat: JSON.stringify(chat.getHistory()),
-        status: "progress",
-      });
-    } else {
-      console.error("No game AI response received.");
-    }
+        if (!aiCache) {
+          throw new Error("Failed to create AI cache instance.");
+        }
+
+        const gameAI = respGameAI.text ? JSON.parse(respGameAI.text) : {};
+
+        const publicos = gameAI.publicos.map((item: { mensaje: string; }) => {
+          return {...item, sender: "GM"};
+        });
+        const privados = gameAI.privados.map((item:
+          {
+            mensaje: string,
+            participante: string;
+          }) => {
+          return {...item, sender: "GM"};
+        });
+
+        transaction.update(roomRef, {
+          gameName: gameAI.nombre,
+          publicos,
+          privados,
+          eventos: gameAI.eventos,
+          acciones: gameAI.acciones,
+          cacheAI: aiCache.name,
+          history: contentAI,
+          // historyChat: JSON.stringify(chat.getHistory()),
+          status: "progress",
+        });
+      } else {
+        console.error("No game AI response received.");
+      }
+    });
   });
 
 const enviarMensaje = runWith({
@@ -122,77 +191,112 @@ const enviarMensaje = runWith({
   .https
   .onCall(async ({roomId, userName, tipo, mensaje}) => {
     const firestore = getFirestore();
-    const roomSnapshot = await firestore.doc(`rooms/${roomId}`).get();
-    if (!roomSnapshot.exists) {
-      throw new Error(`Room with ID ${roomId} does not exist.`);
-    }
-    const roomData = roomSnapshot.data();
+    const roomRef = firestore.doc(`rooms/${roomId}`);
 
-    if (!roomData) {
-      throw new Error(`No data found for room with ID ${roomId}.`);
-    }
+    await firestore.runTransaction(async (transaction) => {
+      const roomSnap = await transaction.get(roomRef);
+      if (!roomSnap.exists) {
+        throw new Error(`Room with ID ${roomId} does not exist.`);
+      }
+      const roomData = roomSnap.data();
 
-    const chatHistory = roomData.historyChat ?
-      JSON.parse(roomData.historyChat) :
-      "[]";
+      if (!roomData) {
+        throw new Error(`No data found for room with ID ${roomId}.`);
+      }
 
-    const chat = genAI.chats.create({
-      model: "gemini-2.5-flash",
-      history: chatHistory,
-    });
-
-    if (chat) {
       const prompt = `
-Importante: debes responder solamente con los nuevos mensajes y eventos.
 ${userName} te envía un mensaje ${tipo}: '${mensaje}'.
+En la respuesta considera los siguientes puntos:
+1. El contexto del juego y la situación actual.
+2. Las acciones recientes de los jugadores.
+3. Cualquier evento relevante que haya ocurrido.
+4. No incluyas los mensajes públicos y privados anteriores.
 `;
 
-      const respMensaje = await chat.sendMessage({
-        message: prompt,
+      const respMensaje = await genAI.models.generateContent({
+        model: "gemini-2.5-flash",
+        contents: prompt,
         config: {
           responseMimeType: "application/json",
           responseSchema: gameSchema,
+          cachedContent: roomData.cacheAI,
         },
       });
 
       if (respMensaje) {
-        const mensajes = respMensaje.text ? JSON.parse(respMensaje.text) : {};
-        const chatHistory = chat.getHistory();
-        const privados = roomData["privados"] || [];
-        const publicos = roomData["publicos"] || [];
-        const eventos = roomData["eventos"] || [];
+        const contentAI = [...roomData.history,
+          {
+            role: "user",
+            parts: [{text: prompt}],
+          },
+          {
+            role: "model",
+            parts: [{text: respMensaje.text}],
+          }];
 
-        if (tipo === "privado") {
-          privados.push({sender: userName, mensaje, participante: userName});
-        }
-        mensajes.privados.forEach((item: {mensaje: string}) => {
-          privados.push({...item, sender: "GM"});
+        const aiCache = await genAI.caches.create({
+          model: "gemini-2.5-flash",
+          config: {
+            displayName: `Game: ${roomId}[${roomData.history.length + 1}]`,
+            contents: contentAI,
+            ttl: "3600s",
+          },
         });
 
-        if (tipo === "publico") {
-          publicos.push({sender: userName, mensaje});
-        }
-        mensajes.publicos.forEach((item: {
-          mensaje: string,
-          participante: string;
-        }) => {
-          publicos.push({...item, sender: "GM"});
-        });
+        const respuestaAI = respMensaje.text ?
+          JSON.parse(respMensaje.text) :
+          {};
+        console.log("Mensajes AI:", respuestaAI);
+        const privados = [
+          ...roomData.privados,
+          ...(tipo === "privado" ?
+            [{sender: userName, mensaje, participante: userName}] :
+            []),
+          ...(respuestaAI.privados ?
+            respuestaAI.privados.map((item: {
+              mensaje: string,
+              participante: string;
+            }) => {
+              return {...item, sender: "GM"};
+            }) :
+            []),
+        ];
+        console.log("Privados:", privados);
+        const publicos = [
+          ...roomData.publicos,
+          ...(respuestaAI.publicos ?
+            respuestaAI.publicos.map((item: {
+              mensaje: string,
+              participante: string;
+            }) => {
+              return {...item, sender: "GM"};
+            }) :
+            []),
+        ];
+        console.log("Publicos:", publicos);
+        const eventos = [
+          ...roomData.eventos,
+          ...(respuestaAI.eventos ? [...respuestaAI.eventos] : []),
+        ];
+        console.log("Eventos:", eventos);
 
-        // eventos.forEach((item: string) => {
-        //   eventos.push(item);
-        // });
-
-        await firestore.doc(`rooms/${roomId}`).update({
+        const oldCacheName = roomData.cacheAI;
+        transaction.update(roomRef, {
           privados,
           publicos,
           eventos,
-          historyChat: JSON.stringify(chatHistory),
+          acciones: respuestaAI.acciones,
+          cacheAI: aiCache.name,
+          history: contentAI,
         });
+        genAI.caches.delete({name: oldCacheName});
+        console.log("Room updated successfully.");
       } else {
         console.error("No game AI response received.");
       }
-    }
+      // }
+    });
   });
 
 export {empezarJuego, enviarMensaje};
+

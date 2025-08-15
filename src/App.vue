@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue';
+import LoaderCircular from './components/LoaderCircular.vue';
 </script>
 
 <template>
+  <loader-circular />
   <v-app>
     <v-layout>
       <router-view />
