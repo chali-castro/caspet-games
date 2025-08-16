@@ -1,8 +1,7 @@
 <script setup lang="ts">
-import { nextTick, onMounted, ref } from 'vue';
+import { ref } from 'vue';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { useFirebaseAuth } from 'vuefire';
-import { adsenseClient } from '../firebase';
 
 const auth = useFirebaseAuth();
 const email = ref('');
@@ -15,18 +14,18 @@ const login = async () =>
     }
 };
 
-const adsbygoogle = ref();
+// const adsbygoogle = ref();
 
-onMounted(async () =>
-{
-    await nextTick();
-    const window: any = document.defaultView;
-    console.log(window.adsbygoogle, adsenseClient);
-    console.log(window);
-    if (adsbygoogle.value && window.adsbygoogle) {
-        (adsbygoogle.value = window.adsbygoogle || []).push({});
-    }
-});
+// onMounted(async () =>
+// {
+//     await nextTick();
+//     const window: any = document.defaultView;
+//     console.log(window.adsbygoogle, adsenseClient);
+//     console.log(window);
+//     if (adsbygoogle.value && window.adsbygoogle) {
+//         (adsbygoogle.value = window.adsbygoogle || []).push({});
+//     }
+// });
 
 </script>
 <template>
@@ -44,7 +43,7 @@ onMounted(async () =>
                     </v-form>
                 </v-col>
             </v-row>
-            <v-row>
+            <!-- <v-row>
                 <v-col style="height: 30vh;">
                     <ins ref="adsbygoogle"
                         class="adsbygoogle"
@@ -54,7 +53,7 @@ onMounted(async () =>
                         data-full-width-responsive="true"
                         data-ad-format="auto"></ins>
                 </v-col>
-            </v-row>
+            </v-row> -->
         </v-container>
     </v-main>
 </template>

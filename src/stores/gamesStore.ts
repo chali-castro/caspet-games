@@ -17,6 +17,7 @@ export default defineStore('games', () =>
 
     const showNewRoomDialog = ref(false);
     const showMensajesDialog = ref<{ show: boolean, tipo: string; }>({ show: false, tipo: '' });
+    const showAccionesDialog = ref(false);
 
     const roomsQry = computed(() => usuario.value != null ?
         query(
@@ -61,6 +62,7 @@ export default defineStore('games', () =>
         rooms,
         showNewRoomDialog,
         showMensajesDialog,
+        showAccionesDialog,
         gmRoom,
         gmRommId,
         playerRoom,

@@ -2,8 +2,9 @@
 import { computed, nextTick, ref, watch } from 'vue';
 import useGames from '../composables/useGames';
 import Mensaje from './Mensaje.vue';
+import RealizarAccion from './RealizarAccion.vue';
 
-const { playerRoom, playerRoomId, showMensajesDialog, usuario } = useGames();
+const { playerRoom, playerRoomId, showAccionesDialog, showMensajesDialog, usuario } = useGames();
 const roomMain = ref<HTMLDivElement | null>(null);
 
 const { id: roomId } = defineProps<{
@@ -38,6 +39,7 @@ watch(() => roomId, () =>
 </script>
 <template>
     <mensaje />
+    <realizar-accion />
     <v-app-bar color="primary">
         <v-app-bar-title>Player View - Juego: {{ playerRoom?.gameName }} - Tus mensajes privados</v-app-bar-title>
         <v-label>Participantes:
@@ -69,7 +71,7 @@ watch(() => roomId, () =>
             <v-row>
                 <v-col class="d-flex flex-row">
                     <v-btn class="mr-4"
-                        @click="showMensajesDialog = { show: true, tipo: 'privado' }">Enviar Mensaje Privado</v-btn>
+                        @click="showAccionesDialog = true">Realizar Acción...</v-btn>
                     <v-btn class="mr-4"
                         @click="showMensajesDialog = { show: true, tipo: 'publico' }">Enviar Mensaje Público</v-btn>
                 </v-col>

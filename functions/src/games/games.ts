@@ -36,14 +36,49 @@ const gameSchema = {
         properties: {
           nombre: {type: Type.STRING},
           descripcion: {type: Type.STRING},
-          opciones: {
+
+          actuanCon: {
             type: Type.ARRAY,
             items: {
               type: Type.STRING,
             },
           },
+          dados: {
+            type: Type.OBJECT,
+            properties: {
+              tipo: {type: Type.STRING},
+              cantidad: {type: Type.NUMBER},
+              condicionesExito: {type: Type.STRING},
+              efectos: {type: Type.STRING},
+            },
+            required: ["tipo", "cantidad"],
+          },
         },
         required: ["nombre", "descripcion"],
+      },
+    },
+    personajes: {
+      type: Type.ARRAY,
+      items: {
+        type: Type.OBJECT,
+        properties: {
+          nombre: {type: Type.STRING},
+          tipo: {type: Type.STRING},
+          historia: {type: Type.STRING},
+        },
+        required: ["nombre", "tipo", "historia"],
+      },
+    },
+    localizaciones: {
+      type: Type.ARRAY,
+      items: {
+        type: Type.OBJECT,
+        properties: {
+          nombre: {type: Type.STRING},
+          tipo: {type: Type.STRING},
+          detalles: {type: Type.STRING},
+        },
+        required: ["nombre", "tipo", "detalles"],
       },
     },
     eventos: {
@@ -75,7 +110,7 @@ const preparaPrompt = async (roomSnap: DocumentSnapshot) => {
     }));
 
   const prompt = `
-Creame un juego ${tipo} \
+Crea para la sala '${roomData?.id} (${roomData?.nombre})' un juego ${tipo} \
 para ${roomData?.participantes.length} jugadores, \
 los participantes son: ${players.join(", ")} \
 donde tú seras el GM e interactuaras con los jugadores \
@@ -97,7 +132,16 @@ También es posible que al terminar la ronda \
 se actualicen las acciones que se puedan realizar. \
 Los mensajes deben estar en formato HTML para ser inscrustado en un tag DIV. \
 Las acciones deben ser claras y específicas, \
-indicando qué se puede hacer en cada momento del juego.
+indicando qué se puede hacer en cada momento del juego, \
+el resultado de algunas acciones dependeran de \
+el valor de un lanzamiento de dados, \
+en ese caso dime las condiciones de éxito y fracaso, \
+y en las acciones importantes éxito rotundo y/o fracaso estrepitoso, \
+indica también sus efectos en cada caso. \
+Describe a los personajes inclusive a los NPC (non-player characters), \
+sus opciones y cómo pueden interactuar con el entorno del juego.
+Tambien describe las localizacion (habitaciones, lugares, caminos, etc.) \
+si existieran.
 `;
 
   return prompt;
@@ -173,9 +217,9 @@ const empezarJuego = runWith({
           privados,
           eventos: gameAI.eventos,
           acciones: gameAI.acciones,
+          personajes: gameAI.personajes,
           cacheAI: aiCache.name,
           history: contentAI,
-          // historyChat: JSON.stringify(chat.getHistory()),
           status: "progress",
         });
       } else {
@@ -207,10 +251,12 @@ const enviarMensaje = runWith({
       const prompt = `
 ${userName} te envía un mensaje ${tipo}: '${mensaje}'.
 En la respuesta considera los siguientes puntos:
-1. El contexto del juego y la situación actual.
-2. Las acciones recientes de los jugadores.
-3. Cualquier evento relevante que haya ocurrido.
-4. No incluyas los mensajes públicos y privados anteriores.
+1. El contexto del juego y la situación actual. \
+2. Las acciones recientes de los jugadores. \
+3. Cualquier evento relevante que haya ocurrido. \
+4. No incluyas los mensajes públicos y privados anteriores. \
+5. No incluyas los eventos. \
+6. Si se han lanzado dados incluye el resultado en los mensajes privados.
 `;
 
       const respMensaje = await genAI.models.generateContent({
@@ -286,6 +332,7 @@ En la respuesta considera los siguientes puntos:
           publicos,
           eventos,
           acciones: respuestaAI.acciones,
+          personajes: respuestaAI.personajes,
           cacheAI: aiCache.name,
           history: contentAI,
         });

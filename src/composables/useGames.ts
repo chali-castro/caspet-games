@@ -4,12 +4,13 @@ import gamesStore from '../stores/gamesStore';
 export default () =>
 { 
     const store = gamesStore();
-    const { isLoading, gmRoom, loggedIn, gmRommId, playerRoom, playerRoomId, rooms, showNewRoomDialog, showMensajesDialog, usuario } = storeToRefs(store);
+    const { isLoading, gmRoom, loggedIn, gmRommId, playerRoom, playerRoomId, rooms, showAccionesDialog, showNewRoomDialog, showMensajesDialog, usuario } = storeToRefs(store);
     const { createRoom, empezarJuego, puedeAccederGM, puedeAccederPlayer, puedeEmpezar, puedeUnirse, sendMessage, unirse } = store;
 
     return {
         isLoading,
         loggedIn,
+        showAccionesDialog,
         showNewRoomDialog,
         showMensajesDialog,
         gmRoom,
