@@ -27,7 +27,7 @@ watch(() => roomId, () =>
 <template>
     <v-app-bar color="primary">
         <v-app-bar-title>Game Master View - Juego: {{ gmRoom?.gameName }} - Mensajes privados</v-app-bar-title>
-        <v-label>Participantes: {{ gmRoom?.participantes?.map((p: { name: string; }) => p.name).join(', ') }}</v-label>
+        <v-label>Participantes: {{ gmRoom?.players?.map((p: { name: string; }) => p.name).join(', ') }}</v-label>
     </v-app-bar>
     <v-main style="height: 100vh;">
         <div class="overflow-y-auto"
@@ -36,11 +36,11 @@ watch(() => roomId, () =>
             <v-row>
                 <v-col>
                     <v-list>
-                        <v-list-item v-for="msg in gmRoom?.publicos"
-                            :key="msg.mensaje">
+                        <v-list-item v-for="msg in gmRoom?.publics"
+                            :key="msg.message">
                             <div class="d-flex flex-row">
                                 <div class="pa-1 player">{{ msg.sender }}:</div>
-                                <div class="pa-1" v-html="msg.mensaje" />
+                                <div class="pa-1" v-html="msg.message" />
                             </div>
                         </v-list-item>
                     </v-list>

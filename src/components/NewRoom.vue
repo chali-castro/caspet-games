@@ -6,6 +6,10 @@ import { type CRoom } from '../model/room';
 const { showNewRoomDialog, createRoom } = useGames();
 const roomName = ref('');
 const roomType = ref('');
+const roomCharacteristics = ref('');
+const roomRounds = ref(10);
+const roomActionsPerRound = ref(1);
+
 const createRoomGame = async () =>
 {
     if (roomName.value.trim() === '') {
@@ -16,6 +20,9 @@ const createRoomGame = async () =>
         id: '',
         name: roomName.value,
         tipo: roomType.value,
+        userCharacteristics: roomCharacteristics.value,
+        rounds: roomRounds.value,
+        actionsPerRound: roomActionsPerRound.value,
         status: 'created',
     };
 
@@ -35,6 +42,26 @@ const createRoomGame = async () =>
                     label="Room Name" />
                 <v-text-field v-model="roomType"
                     label="Room Type" />
+                <v-textarea v-model="roomCharacteristics"
+                    label="Características adicionales"
+                    rows="4"
+                    auto-grow />
+                <v-row>
+                    <v-col>
+                        <v-number-input v-model="roomRounds"
+                            label="Número de rondas"
+                            :min="5"
+                            :max="50"
+                            :step="5" />
+                    </v-col>
+                    <v-col>
+                        <v-number-input v-model="roomActionsPerRound"
+                            label="Número de acciones por ronda"
+                            :min="1"
+                            :max="5"
+                            :step="1" />
+                    </v-col>
+                </v-row>
             </v-card-text>
             <v-card-actions>
                 <v-btn @click="createRoomGame">Create</v-btn>

@@ -3,8 +3,8 @@ import { type DocumentData } from "firebase/firestore";
 interface IMensaje
 {
     sender: string;
-    mensaje: string;
-    participante: string;
+    message: string;
+    player: string;
 }
 
 interface IUsuario
@@ -13,31 +13,46 @@ interface IUsuario
     name: string;
 }
 
+interface IAccionOpciones
+{
+    name: string;
+    secondTargets?: string[];
+}
+
 interface IAccion
 {
-    nombre: string;
-    descripcion: string;
-    actuanCon?: string[];
-    dados?: {
-        tipo: string;
-        cantidad: number;
-        condicionesExito: string;
+    name: string;
+    description: string;
+    targets?: IAccionOpciones[];
+    players: string[];
+    format: string;
+    dice?: {
+        type: string;
+        amount: number;
+        successConditions: string;
+        effects: string;
     };
 }
 
 interface IPersonaje
 {
-    nombre: string;
-    tipo: string;
-    historia: string;
+    name: string;
+    type: string;
+    history: string;
 }
 
 interface IEvento
 {
-    descripcion: string;
-    explicacion: string;
+    description: string;
+    explanation?: string;
 }
 
+interface ILocation
+{
+    name: string;
+    type: string;
+    details: string;
+}
 
 interface CRoom extends DocumentData
 {
@@ -46,13 +61,18 @@ interface CRoom extends DocumentData
     tipo: string;
     status: string;
     gameName?: string;
-    creadoPor?: IUsuario;
-    participantes?: IUsuario[];
-    publicos?: IMensaje[];
-    privados?: IMensaje[];
-    acciones?: IAccion[];
-    eventos?: IEvento[];
-    personajes?: IPersonaje[];
+    owner?: IUsuario;
+    players?: IUsuario[];
+    publics?: IMensaje[];
+    privates?: IMensaje[];
+    actions?: IAccion[];
+    events?: IEvento[];
+    characters?: IPersonaje[];
+    locations?: ILocation[];
+    progressPercentage?: number;
+    userCharacteristics: string;
+    rounds: number;
+    actionsPerRound: number;
 }
 
-export type { CRoom, IAccion };
+export type { CRoom, IAccion, IAccionOpciones };

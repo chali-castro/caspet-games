@@ -19,7 +19,7 @@ const enviarMensaje = () =>
         v-model="showMensajesDialog.show">
         <v-card>
             <v-card-title>
-                <span>Enviar mensaje {{ showMensajesDialog.tipo }} </span>
+                <span>Enviar mensaje {{ showMensajesDialog.tipo === 'public' ? 'público' : 'privado' }} </span>
             </v-card-title>
             <v-card-text>
                 <v-textarea v-model="mensaje"

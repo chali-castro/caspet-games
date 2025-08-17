@@ -13,7 +13,7 @@ const logout = async () =>
   await auth?.signOut();
 };
 
-const participantes = (room: CRoom) => room.participantes?.map((p) => p.name).join(', ');
+const players = (room: CRoom) => room.players?.map((p) => p.name).join(', ');
 
 </script>
 
@@ -51,16 +51,33 @@ const participantes = (room: CRoom) => room.participantes?.map((p) => p.name).jo
                 <v-text-field v-model="item.tipo"
                   label="Tipo de juego"
                   disabled />
-                <v-text-field :modelValue="participantes(item)"
+                <v-text-field :modelValue="players(item)"
                   label="Participantes"
                   disabled />
                 <v-text-field v-model="item.gameName"
                   label="Nombre del juego"
                   disabled />
-                <v-text-field v-model="item.status"
-                  label="Estado"
+                <v-text-field v-if="item.userCharacteristics"
+                  v-model="item.userCharacteristics"
+                  label="Características del usuario"
                   disabled />
-
+                <v-row>
+                  <v-col>
+                    <v-text-field v-model="item.rounds"
+                      label="Número de rondas"
+                      disabled />
+                  </v-col>
+                  <v-col>
+                    <v-text-field v-model="item.actionsPerRound"
+                      label="Número de acciones por ronda"
+                      disabled />
+                  </v-col>
+                  <v-col>
+                    <v-text-field v-model="item.status"
+                      label="Estado"
+                      disabled />
+                  </v-col>
+                </v-row>
                 <v-card-actions>
                   <v-btn v-if="puedeEmpezar(item)"
                     color="primary"

@@ -77,10 +77,13 @@ export default defineStore('games', () =>
                 await addDoc(collection(firestore, 'rooms'), {
                     name: room.name,
                     tipo: room.tipo,
+                    owner: doc(collection(firestore, 'users'), usuario.value?.uid),
+                    players: [doc(collection(firestore, 'users'), usuario.value?.uid)],
+                    public: true,
+                    userCharacteristics: room.userCharacteristics,
+                    rounds: room.rounds,
+                    actionsPerRound: room.actionsPerRound,
                     status: 'created',
-                    creadoPor: doc(collection(firestore, 'users'), usuario.value?.uid),
-                    participantes: [doc(collection(firestore, 'users'), usuario.value?.uid)],
-                    public: true
                 });
             }
             finally {
@@ -103,7 +106,7 @@ export default defineStore('games', () =>
             setLoader();
             try {
                 await updateDoc(doc(collection(firestore, 'rooms'), room.id), {
-                    participantes: arrayUnion(doc(collection(firestore, 'users'), usuario.value?.uid))
+                    players: arrayUnion(doc(collection(firestore, 'users'), usuario.value?.uid))
                 });
                 router.push({ name: 'RoomPlayer', params: { id: room.id } });
             }
@@ -111,20 +114,20 @@ export default defineStore('games', () =>
                 setLoader(false);
             }
         },
-        puedeEmpezar: (room: CRoom) => room.status === 'created' && room.creadoPor?.id === usuario.value?.uid,
-        puedeAccederGM: (room: CRoom) => room.status === 'progress' && room.creadoPor?.id === usuario.value?.uid,
-        puedeAccederPlayer: (room: CRoom) => room.status === 'progress' && room.participantes?.some((item) => item.id === usuario.value?.uid)
-            || (room.status === 'created') && room.creadoPor?.id !== usuario.value?.uid && room.participantes?.some((item) => item.id === usuario.value?.uid),
-        puedeUnirse: (room: CRoom) => room.status === 'created' && room.public && !room.participantes?.some((item) => item.id === usuario.value?.uid),
-        sendMessage: async (tipo: string, message: string) =>
+        puedeEmpezar: (room: CRoom) => room.status === 'created' && room.owner?.id === usuario.value?.uid,
+        puedeAccederGM: (room: CRoom) => room.status === 'progress' && room.owner?.id === usuario.value?.uid,
+        puedeAccederPlayer: (room: CRoom) => room.status === 'progress' && room.players?.some((item) => item.id === usuario.value?.uid)
+            || (room.status === 'created') && room.owner?.id !== usuario.value?.uid && room.players?.some((item) => item.id === usuario.value?.uid),
+        puedeUnirse: (room: CRoom) => room.status === 'created' && room.public && !room.players?.some((item) => item.id === usuario.value?.uid),
+        sendMessage: async (tipo: string, message: string, diceRolls?: number[]) =>
         {
             setLoader();
             try {
                 const roomId = playerRoomId.value;
-                const userName = playerRoom.value?.participantes?.find((p) => p.id === usuario.value?.uid)?.name ?? undefined;
+                const userName = playerRoom.value?.players?.find((p) => p.id === usuario.value?.uid)?.name ?? undefined;
 
                 if (roomId && userName) {
-                    await callEnviarMensaje({ roomId, userName, tipo, mensaje: message });
+                    await callEnviarMensaje({ roomId, userName, typeMsg: tipo, message, diceRolls });
                 }
             }
             finally {

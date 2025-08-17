@@ -18,8 +18,8 @@ const noIniciado = computed(() =>
 
 const privados = computed(() =>
 {
-    const participante = playerRoom.value?.participantes?.find((item) => item.id === usuario.value?.uid);
-    return playerRoom.value?.privados?.filter((msg) => msg.participante === participante?.name) ?? [];
+    const player = playerRoom.value?.players?.find((item) => item.id === usuario.value?.uid);
+    return playerRoom.value?.privates?.filter((msg) => msg.player === player?.name) ?? [];
 });
 
 watch(() => playerRoom.value, async () =>
@@ -43,7 +43,7 @@ watch(() => roomId, () =>
     <v-app-bar color="primary">
         <v-app-bar-title>Player View - Juego: {{ playerRoom?.gameName }} - Tus mensajes privados</v-app-bar-title>
         <v-label>Participantes:
-            {{playerRoom?.participantes?.map((p: { name: string; }) => p.name).join(', ')}}</v-label>
+            {{playerRoom?.players?.map((p: { name: string; }) => p.name).join(', ')}}</v-label>
     </v-app-bar>
     <v-main style="height: 100vh;">
         <div v-if="noIniciado"
@@ -59,10 +59,10 @@ watch(() => roomId, () =>
                 <v-col>
                     <v-list>
                         <v-list-item v-for="msg in privados"
-                            :key="msg.mensaje">
+                            :key="msg.message">
                             <div class="d-flex flex-row">
                                 <div class="pa-1 player">{{ msg.sender }}:</div>
-                                <div class="pa-1" v-html="msg.mensaje" />
+                                <div class="pa-1" v-html="msg.message" />
                             </div>
                         </v-list-item>
                     </v-list>
@@ -73,7 +73,7 @@ watch(() => roomId, () =>
                     <v-btn class="mr-4"
                         @click="showAccionesDialog = true">Realizar Acción...</v-btn>
                     <v-btn class="mr-4"
-                        @click="showMensajesDialog = { show: true, tipo: 'publico' }">Enviar Mensaje Público</v-btn>
+                        @click="showMensajesDialog = { show: true, tipo: 'public' }">Enviar Mensaje Público</v-btn>
                 </v-col>
             </v-row>
         </div>
