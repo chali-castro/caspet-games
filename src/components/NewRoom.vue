@@ -9,6 +9,8 @@ const roomType = ref('');
 const roomCharacteristics = ref('');
 const roomRounds = ref(10);
 const roomActionsPerRound = ref(1);
+const roomUseDice = ref(true);
+const roomNumberOfBots = ref(0);
 
 const createRoomGame = async () =>
 {
@@ -23,6 +25,8 @@ const createRoomGame = async () =>
         userCharacteristics: roomCharacteristics.value,
         rounds: roomRounds.value,
         actionsPerRound: roomActionsPerRound.value,
+        useDice: roomUseDice.value,
+        bots: roomNumberOfBots.value,
         status: 'created',
     };
 
@@ -60,6 +64,16 @@ const createRoomGame = async () =>
                             :min="1"
                             :max="5"
                             :step="1" />
+                    </v-col>
+                    <v-col>
+                        <v-number-input v-model="roomNumberOfBots"
+                            label="Número de bots"
+                            :min="0"
+                            :max="6"
+                            :step="1" />
+                    </v-col>
+                    <v-col>
+                        <v-checkbox-btn v-model="roomUseDice" label="Usar dados" />
                     </v-col>
                 </v-row>
             </v-card-text>

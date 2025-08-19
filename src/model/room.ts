@@ -73,6 +73,8 @@ interface CRoom extends DocumentData
     userCharacteristics: string;
     rounds: number;
     actionsPerRound: number;
+    useDice: boolean;
+    bots: number;
 }
 
 export type { CRoom, IAccion, IAccionOpciones };

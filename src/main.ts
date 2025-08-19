@@ -5,6 +5,7 @@ import { VueFire, VueFireAuth } from 'vuefire';
 import { firebaseApp } from './firebase';
 import router from './router';
 
+
 import 'vuetify/styles/main.css';
 import { createVuetify } from 'vuetify';
 import * as components from 'vuetify/components';

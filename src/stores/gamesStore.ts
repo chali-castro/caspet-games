@@ -83,6 +83,8 @@ export default defineStore('games', () =>
                     userCharacteristics: room.userCharacteristics,
                     rounds: room.rounds,
                     actionsPerRound: room.actionsPerRound,
+                    useDice: room.useDice,
+                    bots: room.bots,
                     status: 'created',
                 });
             }

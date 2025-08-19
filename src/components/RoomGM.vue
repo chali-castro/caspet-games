@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { nextTick, ref, watch } from 'vue';
 import useGames from '../composables/useGames';
+import CastButton from './CastButton.vue';
 
 const { gmRoom, gmRommId } = useGames();
 const roomMain = ref<HTMLDivElement | null>(null);
@@ -27,6 +28,7 @@ watch(() => roomId, () =>
 <template>
     <v-app-bar color="primary">
         <v-app-bar-title>Game Master View - Juego: {{ gmRoom?.gameName }} - Mensajes privados</v-app-bar-title>
+        <cast-button />
         <v-label>Participantes: {{ gmRoom?.players?.map((p: { name: string; }) => p.name).join(', ') }}</v-label>
     </v-app-bar>
     <v-main style="height: 100vh;">

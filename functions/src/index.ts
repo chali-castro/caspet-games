@@ -4,7 +4,8 @@ import {onInit, params, setGlobalOptions} from "firebase-functions";
 import {GoogleGenAI} from "@google/genai";
 import * as admin from "firebase-admin";
 
-import {empezarJuego, enviarMensaje} from "./games/games";
+import {empezarJuego, enviarMensaje} from "./services/games";
+import {crearJuegoTask, userActionTask} from "./services/queues";
 
 admin.initializeApp();
 
@@ -25,3 +26,5 @@ onInit(async () => {
 
 exports.empezarJuego = empezarJuego;
 exports.enviarMensaje = enviarMensaje;
+exports.crearJuegoTask = crearJuegoTask;
+exports.userActionTask = userActionTask;
