@@ -96,7 +96,7 @@ export default defineStore('games', () =>
         {
             setLoader();
             try {
-                await callEmpezarJuego(room.id);
+                await callEmpezarJuego({ roomId: room.id });
                 gmRommId.value = room.id;
             }
             finally {
