@@ -69,12 +69,13 @@ const castContent = async () =>
   try {
     //@ts-ignore
     var castSession = cast.framework.CastContext.getInstance().getCurrentSession();
-    console.log('current url: ', `https://caspet-games.web.app${router.currentRoute.value.path}`);
+    const url = 'https://es.wikipedia.org/wiki/Wikipedia:Portada';
     //@ts-ignore
-    var mediaInfo = new chrome.cast.media.MediaInfo(`https://caspet-games.web.app${router.currentRoute.value.path}`, 'text/html');
+    var mediaInfo = new chrome.cast.media.MediaInfo(url, 'text/html');
     //@ts-ignore
     mediaInfo.metadata = new chrome.cast.media.GenericMediaMetadata();
     mediaInfo.metadata.title = 'Caso de prueba';
+    mediaInfo.metadata.subtitle = url;
     //@ts-ignore
     var request = new chrome.cast.media.LoadRequest(mediaInfo);
     await castSession.loadMedia(request);
