@@ -4,8 +4,8 @@ import {onCall} from "firebase-functions/v2/https";
 
 
 const empezarJuego = onCall({
-  enforceAppCheck: true,
   secrets: ["GOOGLE_GENAI_API_KEY"],
+  enforceAppCheck: true,
 }, async (request) => {
   const {roomId} = request.data;
   const firestore = getFirestore();
@@ -20,8 +20,8 @@ const empezarJuego = onCall({
 });
 
 const enviarMensaje = onCall({
-  enforceAppCheck: true,
   secrets: ["GOOGLE_GENAI_API_KEY"],
+  enforceAppCheck: true,
 }, async (request) => {
   const {roomId, userName, typeMsg, message, diceRolls} = request.data;
   // const firestore = getFirestore();

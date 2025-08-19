@@ -103,7 +103,11 @@ The answer must be in Spanish.`;
   return prompt;
 };
 
-const crearJuegoTask = onTaskDispatched(async (task) => {
+const crearJuegoTask = onTaskDispatched({
+  secrets: ["GOOGLE_GENAI_API_KEY"],
+  concurrency: 1,
+  retry: false,
+}, async (task) => {
   const firestore = getFirestore();
 
   await firestore.runTransaction(async (transaction) => {
@@ -165,7 +169,11 @@ const crearJuegoTask = onTaskDispatched(async (task) => {
   });
 });
 
-const userActionTask = onTaskDispatched(async (task) => {
+const userActionTask = onTaskDispatched({
+  secrets: ["GOOGLE_GENAI_API_KEY"],
+  concurrency: 1,
+  retry: false,
+}, async (task) => {
   const {roomId, userName, typeMsg, message, diceRolls} = task.data;
   const firestore = getFirestore();
   const roomRef = firestore.doc(`rooms/${roomId}`);
