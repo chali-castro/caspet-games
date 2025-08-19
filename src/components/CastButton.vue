@@ -69,6 +69,7 @@ const castContent = async () =>
   try {
     //@ts-ignore
     var castSession = cast.framework.CastContext.getInstance().getCurrentSession();
+    console.log(castSession);
     const url = 'https://es.wikipedia.org/wiki/Wikipedia:Portada';
     //@ts-ignore
     var mediaInfo = new chrome.cast.media.MediaInfo(url, 'text/html');
