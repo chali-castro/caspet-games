@@ -1,19 +1,15 @@
-// import express from "express";
-// import cors from "cors";
 import {onInit, params, setGlobalOptions} from "firebase-functions";
 import {GoogleGenAI} from "@google/genai";
 import * as admin from "firebase-admin";
 
-import {empezarJuego, enviarMensaje} from "./services/games";
-import {crearJuegoTask, userActionTask} from "./services/queues";
+import {empezarJuego} from "./services/empezarJuego";
+import {enviarMensaje} from "./services/enviarMensaje";
+import {createGameTask} from "./tasks/createGame";
+import {createScenarioTask} from "./tasks/createScenario";
+import {startGameTask} from "./tasks/startGame";
+import {userActionTask} from "./tasks/userAction";
 
 admin.initializeApp();
-
-// if (process.env.FIREBASE_DEBUG_MODE === "true") {
-//   console.log("Debug mode is enabled. Initializing express app with CORS.");
-//   const appHost = express();
-//   appHost.use(cors({origin: "*"}));
-// }
 
 export let genAI: GoogleGenAI;
 
@@ -26,5 +22,7 @@ onInit(async () => {
 
 exports.empezarJuego = empezarJuego;
 exports.enviarMensaje = enviarMensaje;
-exports.crearJuegoTask = crearJuegoTask;
+exports.createGameTask = createGameTask;
+exports.createScenarioTask = createScenarioTask;
+exports.startGameTask = startGameTask;
 exports.userActionTask = userActionTask;
