@@ -3,7 +3,7 @@ import {genAI} from "..";
 import {getFirestore} from "firebase-admin/firestore";
 import {logger} from "firebase-functions";
 import {getPrompt, promptCreateScenario, systemInstruction} from "./prompts";
-import {scenarioSchema} from "../schemas/scenarioSchema";
+import {scenarioSchema} from "caspet-games-model";
 import {getFunctions} from "firebase-admin/functions";
 
 export const createScenarioTask = onTaskDispatched({

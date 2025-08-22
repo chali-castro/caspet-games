@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vue-tsc && vite build",
+    "build:models": "cd caspet-games-model && npm run build",
+    "build": "npm run build:models && vue-tsc && vite build",
     "preview": "vite preview",
     "deploy": "vue-tsc && vite build && firebase deploy",
     "emulator": "firebase emulators:start --import=data --export-on-exit"
@@ -13,6 +14,7 @@
   "dependencies": {
     "@google/genai": "^1.13.0",
     "@mdi/font": "^7.4.47",
+    "caspet-games-model": "file:caspet-games-model",
     "dotenv": "^17.2.1",
     "firebase": "~11.6.0",
     "pinia": "^3.0.3",

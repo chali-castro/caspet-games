@@ -43,7 +43,7 @@ export const gameStateSchema = {
             items: {
               type: "object",
               properties: {
-                state: {
+                playerState: {
                   type: "string",
                   description: "Name of the state",
                 },

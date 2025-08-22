@@ -1,0 +1,9 @@
+export { IAction } from './IAction';
+export { IFeature } from './IFeature';
+export { IHTML } from './IHTML';
+export { IMessage } from './IMessage';
+export { IPhase } from './IPhase';
+export { IPlayer } from './IPlayer';
+export { IRole } from './IRole';
+export { IState } from './IState';
+export { IWinCondition } from './IWinCondition';

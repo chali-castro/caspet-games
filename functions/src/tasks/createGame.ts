@@ -2,7 +2,7 @@ import {getFirestore} from "firebase-admin/firestore";
 import {onTaskDispatched} from "firebase-functions/tasks";
 import {genAI} from "..";
 import {getPrompt, promptCreateGame, systemInstruction} from "./prompts";
-import {gameSchema} from "../schemas/gameSchema";
+import {gameSchema} from "caspet-games-model";
 import {logger} from "firebase-functions";
 import {getFunctions} from "firebase-admin/functions";
 

@@ -2,6 +2,7 @@
 import { onMounted, ref } from 'vue';
 
 const adsbygoogle = ref();
+const VITE_ADSENSE_CLIENT = ref('')
 
 onMounted(() =>
 {

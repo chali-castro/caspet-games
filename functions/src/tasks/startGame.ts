@@ -3,7 +3,7 @@ import {genAI} from "..";
 import {getFirestore} from "firebase-admin/firestore";
 import {logger} from "firebase-functions";
 import {getPrompt, promptStartGame, systemInstruction} from "./prompts";
-import {gameStateSchema} from "../schemas/gameStateSchema";
+import {gameStateSchema} from "caspet-games-model";
 
 export const startGameTask = onTaskDispatched({
   secrets: ["GOOGLE_GENAI_API_KEY"],
